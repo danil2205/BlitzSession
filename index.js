@@ -3,6 +3,7 @@
 const puppeteer = require('puppeteer');
 const readline = require('readline-sync');
 const fetch = require('node-fetch');
+const fs = require('fs');
 
 const applicationID = '118323c3ada6d49317301a0762b75642';
 let accountID = null;
@@ -37,44 +38,65 @@ const selectors = {
   twoFactorButton: '#jsc-submit-button-db60-99c8- > button',
 };
 
-const getAccountID = async () => {
-  const nickName = await readline.question('Write a nickname: ');
-  const url = `https://api.worldoftanks.ru/wot/account/list/?application_id=${applicationID}&search=${nickName}`;
-  const response = await fetch(url);
-  const data = await response.json();
-  const accounts = data.data;
-  accounts.map((account) => {
-    if (account.nickname.toLowerCase() === nickName.toLowerCase()) {
-      accountID = account.account_id;
-      console.log('Account ID:', accountID);
-    }
-  });
+const getAccountID = async (nick) => {
+  try {
+    const nickName = await nick;
+    const url = `https://api.worldoftanks.ru/wot/account/list/?application_id=${applicationID}&search=${nickName}`;
+    const response = await fetch(url);
+    const data = await response.json();
+    const accounts = data.data;
+    accounts.map((account) => {
+      if (account.nickname.toLowerCase() === nickName.toLowerCase()) {
+        accountID = account.account_id;
+      }
+    })
+    return `account_id of ${nick}: ${accountID}`;
+  } catch {
+    console.log('Unknown nickname');
+  }
 };
 
-const getPrivateInfo = async () => {
+const getPublicInfo = async (nick) => {
+  try {
+    await getAccountID(nick);
+    const url = `https://api.worldoftanks.ru/wot/account/info/?application_id=${applicationID}&account_id=${accountID}`;
+    const res = [];
+    const response = await fetch(url);
+    const data = await response.json();
+    const playerInfo = data.data[accountID];
+    for (const [key, info] of Object.entries(publicInfo)) {
+      const value = playerInfo[key];
+      if (isTimestamp(value)) {
+        const data = `${info} ${getTimestampToDate(value)}`;
+        res.push(data);
+      } else {
+        const data = `${info} ${value}`;
+        res.push(data);
+      }
+    }
+    return res;
+  } catch {
+    console.log('Cannot find that nickname');
+  }
+};
+
+const getPrivateInfo = async (email, password) => {
   await getAccountID();
-  await getAccessToken();
+  await getAccessToken(email, password);
   const url = `https://api.worldoftanks.ru/wot/account/info/?application_id=${applicationID}&access_token=${accessToken}&account_id=${accountID}`;
+  const res = [];
   const response = await fetch(url);
   const data = await response.json();
   const playerInfo = data.data[accountID];
-  for (const [key, info] of Object.entries(publicInfo)) {
-    const value = playerInfo[`${key}`];
-    if (isTimestamp(value)) {
-      console.log(`${info} ${getTimestampToDate(value)}`)
-    } else {
-      console.log(`${info} ${value}`);
-    }
-  }
   for (const [key, info] of Object.entries(privateInfo)) {
-    const value = playerInfo.private[`${key}`];
-    console.log(`${info} ${value}`);
+    const value = playerInfo.private[key];
+    const data = `${info} ${value}`;
+    res.push(data);
   }
+  return res;
 }
 
-const getAccessToken = async () => {
-  const email = await readline.question('Write a email: ');
-  const password = await readline.question('Write a password: ');
+const getAccessToken = async (email, password) => {
   const url = `https://api.worldoftanks.ru/wot/auth/login/?application_id=${applicationID}&redirect_uri=https%3A%2F%2Fdevelopers.wargaming.net%2Freference%2Fall%2Fwot%2Fauth%2Flogin%2F`;
   let browser = await puppeteer.launch({ headless: true, slowMo: 100 });
   let page = await browser.newPage();
@@ -101,8 +123,8 @@ const getAccessToken = async () => {
   await page.waitForSelector(selectors.accessIDText);
   const element = await page.$(selectors.accessIDText);
   accessToken = await page.evaluate((el) => el.textContent.replace(/"/g, ''), element);
-  console.log('Access Token:', accessToken);
   await browser.close();
+  return accessToken;
 };
 
 const addZeroInTime = (time, n = 2) => `${time}`.padStart(n, '0');
@@ -114,18 +136,13 @@ const getTimestampToDate = (timestamp) => {
   return `${date.toLocaleDateString()} ${hours}:${minutes}`;
 };
 
-const isTimestamp = (value) => value.toString().length === 10 && typeof value === 'number'
+const setDateToTimestamp = (date) => date.getTime();
 
-const getFunction = async () => {
-  console.log('Write 1, if you want to get account_id by nickname \n' +
-    'Write 2, if you want to get access_token by email/password \n' +
-    'Write 3, if you want to get private info by access_token and account_id \n');
-  const digit = await readline.question('Write a digit: ');
-  const collection = {
-    1: () => getAccountID(),
-    2: () => getAccessToken(),
-    3: () => getPrivateInfo(),
-  };
-  await collection[digit]();
-};
-getFunction();
+const isTimestamp = (value) => value.toString().length === 10 && typeof value === 'number';
+
+module.exports = {
+  getAccountID,
+  getAccessToken,
+  getPublicInfo,
+  getPrivateInfo,
+}
