@@ -3,7 +3,6 @@
 const puppeteer = require('puppeteer');
 const readline = require('readline-sync');
 const fetch = require('node-fetch');
-const fs = require('fs');
 
 const applicationID = '118323c3ada6d49317301a0762b75642';
 let accountID = null;
@@ -81,19 +80,23 @@ const getPublicInfo = async (nick) => {
 };
 
 const getPrivateInfo = async (email, password) => {
-  await getAccountID();
-  await getAccessToken(email, password);
-  const url = `https://api.worldoftanks.ru/wot/account/info/?application_id=${applicationID}&access_token=${accessToken}&account_id=${accountID}`;
-  const res = [];
-  const response = await fetch(url);
-  const data = await response.json();
-  const playerInfo = data.data[accountID];
-  for (const [key, info] of Object.entries(privateInfo)) {
-    const value = playerInfo.private[key];
-    const data = `${info} ${value}`;
-    res.push(data);
+  try {
+    await getAccountID();
+    await getAccessToken(email, password);
+    const url = `https://api.worldoftanks.ru/wot/account/info/?application_id=${applicationID}&access_token=${accessToken}&account_id=${accountID}`;
+    const res = [];
+    const response = await fetch(url);
+    const data = await response.json();
+    const playerInfo = data.data[accountID];
+    for (const [key, info] of Object.entries(privateInfo)) {
+      const value = playerInfo.private[key];
+      const data = `${info} ${value}`;
+      res.push(data);
+    }
+    return res;
+  } catch {
+    console.log('Incorrect password or email!');
   }
-  return res;
 }
 
 const getAccessToken = async (email, password) => {
@@ -127,6 +130,39 @@ const getAccessToken = async (email, password) => {
   return accessToken;
 };
 
+const fetchStats = async (accountId) => {
+  const url = `https://api.wotblitz.ru/wotb/account/info/?application_id=${applicationID}&account_id=${accountId}`;
+  const response = await fetch(url);
+  const data = await response.json();
+  const playerInfo = data.data[accountId].statistics.all;
+  const battles = playerInfo.battles;
+  const wins = playerInfo.wins;
+  const damage = playerInfo.damage_dealt;
+  return [battles, wins, damage];
+}
+
+let currBattles;
+let currWins;
+let currDamage;
+
+const startSession = async (accountId) => {
+  [currBattles, currWins, currDamage] = await fetchStats(accountId)
+  return [currBattles, currWins, currDamage];
+};
+
+const endSession = async (accountId) => {
+  const [endBattles, endWins, endDamage] = await fetchStats(accountId);
+
+  const battles = endBattles - currBattles;
+  const wins = endWins - currWins;
+  const winRate = (wins / battles) * 100;
+  const averageDamage = (endDamage - currDamage) / battles;
+  return `You ended your session with following results: \n
+  Battles: ${battles} \n
+  Damage: ${averageDamage} \n
+  WinRate: ${winRate.toFixed(2)}%`;
+};
+
 const addZeroInTime = (time, n = 2) => `${time}`.padStart(n, '0');
 
 const getTimestampToDate = (timestamp) => {
@@ -136,7 +172,6 @@ const getTimestampToDate = (timestamp) => {
   return `${date.toLocaleDateString()} ${hours}:${minutes}`;
 };
 
-const setDateToTimestamp = (date) => date.getTime();
 
 const isTimestamp = (value) => value.toString().length === 10 && typeof value === 'number';
 
@@ -145,4 +180,6 @@ module.exports = {
   getAccessToken,
   getPublicInfo,
   getPrivateInfo,
+  startSession,
+  endSession,
 }
