@@ -1,12 +1,9 @@
 'use strict';
 
-const puppeteer = require('puppeteer');
-const readline = require('readline-sync');
 const fetch = require('node-fetch');
 
 const applicationID = '118323c3ada6d49317301a0762b75642';
 let accountID = null;
-let accessToken = null;
 
 const publicInfo = {
   'nickname': 'Никнейм:',
@@ -14,27 +11,6 @@ const publicInfo = {
   'clan_id': 'Есть ли клан (айди):',
   'last_battle_time': 'Последний бой:',
   'created_at': 'Аккаунт создан:',
-};
-
-const privateInfo = {
-  'credits': 'Количество кредитов:',
-  'gold': 'Количество золота:',
-  'bonds': 'Количество бонов:',
-  'free_xp': 'Количество свободного опыта:',
-  'is_bound_to_phone': 'Привязан телефон:',
-  'is_premium': 'Есть ли премиум:',
-  'ban_info': 'Бан:',
-};
-
-const selectors = {
-  loginInput: '#id_login',
-  passwordInput: '#id_password',
-  submitButton: '#jsc-submit-button-ed41-d255- > button > span',
-  confirmButton: '#confirm_form > div > div > input',
-  accessIDText: 'body > div.console.js-console-layout.ui-resizable.ui-draggable.console__active > div.console_wrapper > pre > div > div.jspPane > code > div > ul > li:nth-child(2) > span.string',
-  twoFactor: '#jsc-twofactor-form-ccb9-f5ff- > form > div > div > p',
-  twoFactorInput: '#id_code',
-  twoFactorButton: '#jsc-submit-button-db60-99c8- > button',
 };
 
 const getAccountID = async (nick) => {
@@ -79,57 +55,6 @@ const getPublicInfo = async (nick) => {
   }
 };
 
-const getPrivateInfo = async (email, password) => {
-  try {
-    await getAccountID();
-    await getAccessToken(email, password);
-    const url = `https://api.worldoftanks.ru/wot/account/info/?application_id=${applicationID}&access_token=${accessToken}&account_id=${accountID}`;
-    const res = [];
-    const response = await fetch(url);
-    const data = await response.json();
-    const playerInfo = data.data[accountID];
-    for (const [key, info] of Object.entries(privateInfo)) {
-      const value = playerInfo.private[key];
-      const data = `${info} ${value}`;
-      res.push(data);
-    }
-    return res;
-  } catch {
-    console.log('Incorrect password or email!');
-  }
-}
-
-const getAccessToken = async (email, password) => {
-  const url = `https://api.worldoftanks.ru/wot/auth/login/?application_id=${applicationID}&redirect_uri=https%3A%2F%2Fdevelopers.wargaming.net%2Freference%2Fall%2Fwot%2Fauth%2Flogin%2F`;
-  let browser = await puppeteer.launch({ headless: true, slowMo: 100 });
-  let page = await browser.newPage();
-  await page.goto(url, { waitUntil: 'domcontentloaded' });
-
-  await page.waitForSelector(selectors.loginInput);
-  await page.type(selectors.loginInput, email);
-  await page.type(selectors.passwordInput, password);
-  const sendDataButton = await page.$(selectors.submitButton);
-  await sendDataButton.click();
-
-  await page.waitFor(2000);
-  if (await page.$(selectors.twoFactorInput) !== null) {
-    const twoFactor = await readline.question('Write Two Factor code: ');
-    await page.type(selectors.twoFactorInput, twoFactor);
-    const sendCodeButton = await page.$(selectors.twoFactorButton);
-    await sendCodeButton.click();
-  }
-
-  await page.waitForSelector(selectors.confirmButton);
-  const buttonConfirm = await page.$(selectors.confirmButton);
-  await buttonConfirm.click();
-
-  await page.waitForSelector(selectors.accessIDText);
-  const element = await page.$(selectors.accessIDText);
-  accessToken = await page.evaluate((el) => el.textContent.replace(/"/g, ''), element);
-  await browser.close();
-  return accessToken;
-};
-
 const fetchStats = async (accountId) => {
   const url = `https://api.wotblitz.ru/wotb/account/info/?application_id=${applicationID}&account_id=${accountId}`;
   const response = await fetch(url);
@@ -155,12 +80,9 @@ const endSession = async (accountId) => {
 
   const battles = endBattles - currBattles;
   const wins = endWins - currWins;
-  const winRate = (wins / battles) * 100;
-  const averageDamage = (endDamage - currDamage) / battles;
-  return `You ended your session with following results: \n
-  Battles: ${battles} \n
-  Damage: ${averageDamage} \n
-  WinRate: ${winRate.toFixed(2)}%`;
+  const winRate = ((wins / battles) * 100).toFixed(2);
+  const averageDamage = ((endDamage - currDamage) / battles).toFixed();
+  return [battles, averageDamage, `${winRate}%`];
 };
 
 const addZeroInTime = (time, n = 2) => `${time}`.padStart(n, '0');
@@ -172,12 +94,10 @@ const getTimestampToDate = (timestamp) => {
   return `${date.toLocaleDateString()} ${hours}:${minutes}`;
 };
 
-
 const isTimestamp = (value) => value.toString().length === 10 && typeof value === 'number';
 
 module.exports = {
   getAccountID,
-  getAccessToken,
   getPublicInfo,
   getPrivateInfo,
   startSession,
