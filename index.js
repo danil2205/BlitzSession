@@ -2,7 +2,7 @@
 
 const fetch = require('node-fetch');
 
-const applicationID = '118323c3ada6d49317301a0762b75642';
+const applicationID = 'd78e7f67147305f3042bef05755fa168';
 let accountID = null;
 
 const publicInfo = {
@@ -16,7 +16,7 @@ const publicInfo = {
 const getAccountID = async (nick) => {
   try {
     const nickName = await nick;
-    const url = `https://api.worldoftanks.ru/wot/account/list/?application_id=${applicationID}&search=${nickName}`;
+    const url = `https://api.worldoftanks.eu/wot/account/list/?application_id=${applicationID}&search=${nickName}`;
     const response = await fetch(url);
     const data = await response.json();
     const accounts = data.data;
@@ -34,7 +34,7 @@ const getAccountID = async (nick) => {
 const getPublicInfo = async (nick) => {
   try {
     await getAccountID(nick);
-    const url = `https://api.worldoftanks.ru/wot/account/info/?application_id=${applicationID}&account_id=${accountID}`;
+    const url = `https://api.worldoftanks.eu/wot/account/info/?application_id=${applicationID}&account_id=${accountID}`;
     const res = [];
     const response = await fetch(url);
     const data = await response.json();
@@ -56,7 +56,7 @@ const getPublicInfo = async (nick) => {
 };
 
 const fetchStats = async (accountId) => {
-  const url = `https://api.wotblitz.ru/wotb/account/info/?application_id=${applicationID}&account_id=${accountId}`;
+  const url = `https://api.wotblitz.eu/wotb/account/info/?application_id=${applicationID}&account_id=${accountId}`;
   const response = await fetch(url);
   const data = await response.json();
   const playerInfo = data.data[accountId].statistics.all;
