@@ -20,6 +20,13 @@ const sessionRouter = require('./routes/sessionRouter');
 
 const app = express();
 
+app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.header("Access-Control-Allow-Methods", "Content-Type, Authorization, X-Requested-With");
+  next();
+});
+
 app.all('*', (req, res, next) => {
   if (req.secure) next();
   else {
