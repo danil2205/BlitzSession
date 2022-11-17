@@ -4,6 +4,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const authenticate = require('../authenticate');
 const cors = require('./cors');
+const reactURL = 'http://localhost:3005/';
 
 const Accounts = require('../models/accounts');
 const accountRouter = express.Router();
@@ -12,31 +13,7 @@ accountRouter.use(bodyParser.json());
 accountRouter.route('/')
   .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
   .get(cors.cors, authenticate.verifyUser, (req, res, next) => {
-    if (req.query.nickname) {
-      Accounts.findOne({'user': req.user._id})
-        .then((accounts) => {
-          if (!accounts) {
-            Accounts.create({})
-              .then((account) => {
-                account.user = req.user._id;
-                account.userAccounts.push(req.query);
-                account.save()
-                res.redirect('https://localhost:3443/accounts/')
-              });
-          } else {
-            if (accounts.userAccounts.some((account) => account.account_id.toString() === req.query.account_id)) {
-              const err = new Error('You already logged in!');
-              err.status = 401;
-              return next(err);
-            } else {
-              accounts.userAccounts.push(req.query);
-              accounts.save()
-              res.redirect('https://localhost:3443/accounts/')
-            }
-          }
-        });
-    } else {
-      Accounts.find({'user': req.user._id})
+    Accounts.find({'user': req.user._id})
         .populate('user')
         .then((accounts) => {
           res.statusCode = 200;
@@ -44,11 +21,39 @@ accountRouter.route('/')
           res.json(accounts);
         }, (err) => next(err))
       .catch((err) => next(err));
-    }
   })
   .post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
-    res.statusCode = 403;
-    res.end('POST operation is not supported on /accounts');
+    if (req.body.account_id === null) {
+      const err = new Error('Error while getting info');
+      err.status = 401;
+      return next(err);
+    }
+    Accounts.findOne({'user': req.user._id})
+      .then((accounts) => {
+        if (!accounts) {
+          Accounts.create({})
+            .then((account) => {
+              account.user = req.user._id;
+              account.userAccounts.push(req.body);
+              account.save()
+              es.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            res.json({success: true, status: 'Account added successful'});
+            });
+        } else {
+          if (accounts.userAccounts.some((account) => account.account_id.toString() === req.body.account_id)) {
+            const err = new Error('You already have this account!');
+            err.status = 401;
+            return next(err);
+          } else {
+            accounts.userAccounts.push(req.body);
+            accounts.save();
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            res.json({success: true, status: 'Account added successful'});
+          }
+        }
+      });
   })
   .put(cors.corsWithOptions, authenticate.verifyUser, (req, res) => {
     res.statusCode = 403;
@@ -67,12 +72,8 @@ accountRouter.route('/')
 accountRouter.route('/:accountID')
   .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
   .get(cors.cors, (req, res, next) => {
-    // res.statusCode = 403;
-    // res.end(`GET operation is not supported on /accounts/${req.params.accountID}`);
-
-    const applicationId = '118323c3ada6d49317301a0762b75642'; // temporarily
-    const redirectUri = 'https://localhost:3443/accounts';
-    res.redirect(`https://api.worldoftanks.ru/wot/auth/login/?application_id=${applicationId}&nofollow=0&redirect_uri=${redirectUri}`);
+    res.statusCode = 403;
+    res.end(`GET operation is not supported on /accounts/${req.params.accountID}`);
   })
   .post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
     res.statusCode = 403;

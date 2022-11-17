@@ -99,7 +99,6 @@ const isTimestamp = (value) => value.toString().length === 10 && typeof value ==
 module.exports = {
   getAccountID,
   getPublicInfo,
-  getPrivateInfo,
   startSession,
   endSession,
 }

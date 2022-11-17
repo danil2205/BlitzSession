@@ -21,9 +21,13 @@ const sessionRouter = require('./routes/sessionRouter');
 const app = express();
 
 app.use(function(req, res, next) {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin, X-Requested-With, Content-Type, Accept, Authorization");
-  res.header("Access-Control-Allow-Methods", "Content-Type, Authorization, X-Requested-With");
+  // res.header("Access-Control-Allow-Origin", "*");
+  // res.header("Access-Control-Allow-Headers", "Access-Control-Allow-Headers, Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  // res.header("Access-Control-Allow-Methods", "Content-Type, Authorization, X-Requested-With, GET, HEAD, OPTIONS, POST, PUT");
+  // res.header("Access-Control-Allow-Credentials", "true");
+  res.header("access-control-allow-origin", "*"),
+  res.header('Access-Control-Allow-Headers', '*'),
+  res.header('Access-Control-Allow-Methods', '*'),
   next();
 });
 
