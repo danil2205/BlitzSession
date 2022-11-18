@@ -4,7 +4,6 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const authenticate = require('../authenticate');
 const cors = require('./cors');
-const reactURL = 'http://localhost:3005/';
 
 const Accounts = require('../models/accounts');
 const accountRouter = express.Router();

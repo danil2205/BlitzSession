@@ -17,6 +17,7 @@ const indexRouter = require('./routes/index');
 const accountRouter = require('./routes/accountRouter');
 const usersRouter = require('./routes/users');
 const sessionRouter = require('./routes/sessionRouter');
+const contactRouter = require('./routes/contactRouter');
 
 const app = express();
 
@@ -52,6 +53,7 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/accounts', accountRouter);
 app.use('/session', sessionRouter);
+app.use('/contact', contactRouter);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
