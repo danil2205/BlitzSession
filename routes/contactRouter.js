@@ -20,7 +20,6 @@ contactRouter.route('/')
   .post(cors.corsWithOptions, (req, res, next) => {
     Feedback.create(req.body)
     .then((feedback) => {
-        console.log('Feedback Created ', feedback);
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
         res.json(feedback);

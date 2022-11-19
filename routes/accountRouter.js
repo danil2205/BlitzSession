@@ -35,9 +35,9 @@ accountRouter.route('/')
               account.user = req.user._id;
               account.userAccounts.push(req.body);
               account.save()
-              es.statusCode = 200;
-            res.setHeader('Content-Type', 'application/json');
-            res.json({success: true, status: 'Account added successful'});
+              res.statusCode = 200;
+              res.setHeader('Content-Type', 'application/json');
+              res.json({success: true, status: 'Account added successful'});
             });
         } else {
           if (accounts.userAccounts.some((account) => account.account_id.toString() === req.body.account_id)) {
