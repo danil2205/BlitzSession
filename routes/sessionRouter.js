@@ -22,34 +22,42 @@ sessionRouter.route('/')
         res.json(accounts);
       }, (err) => next(err))
       .catch((err) => next(err));
-  });
-
-
-sessionRouter.route('/:sessionStatus')
-  .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
-  .get(cors.cors, authenticate.verifyUser, async (req, res, next) => {
-    const accountID = await Accounts.findOne({'user': req.user._id})
-      .then((acc) => acc.userAccounts[0].account_id); // [0] - bullshit :(
-    let result;
-
-    if (req.params.sessionStatus === '0') {
-      console.log('Session Started');
-      result = await startSession(accountID);
-    }
-
-    if (req.params.sessionStatus === '1') {
-      console.log('Session Ended');
-      result = await endSession(accountID);
-    }
-
-    if (req.params.sessionStatus === '2') {
-      console.log('Session Cleared');
-      result = await startSession(accountID);
-    }
-
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'application/json');
-    res.json(result);
+  })
+  .post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
+    Session.findOne({'user': req.user._id})
+      .then((session) => {
+        if (!session) {
+          Session.create(req.body)
+            .then((session) => {
+              session.user = req.user._id;
+              session.save();
+              res.statusCode = 200;
+              res.setHeader('Content-Type', 'application/json');
+              res.json(session);
+            })
+        } else {
+          Session.findOneAndUpdate({'user': req.user._id}, req.body, (err, data) => {
+            if (err) {
+              const err = new Error('Error while getting info');
+              err.status = 401;
+              return next(err);
+            } else {
+                res.statusCode = 200;
+                res.setHeader('Content-Type', 'application/json');
+                res.json(data);
+            }
+          })
+        }
+      }, (err) => next(err))
+      .catch((err) => next(err));
+  })
+  .put(cors.corsWithOptions, (req, res) => {
+    res.statusCode = 403;
+    res.end('PUT operation is not supported on /session');
+  })
+  .delete(cors.corsWithOptions, (req, res, next) => {
+    res.statusCode = 403;
+    res.end('DELETE operation is not supported on /session');
   });
 
 module.exports = sessionRouter;

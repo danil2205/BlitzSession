@@ -16,7 +16,7 @@ const sessionSchema = new Schema({
     type: Number,
     required: true,
   },
-  winRate: {
+  wins: {
     type: String,
     required: true,
   },
