@@ -4,10 +4,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const authenticate = require('../authenticate');
 const cors = require('./cors');
-const { startSession, endSession } = require('../index');
 
 const Session = require('../models/session');
-const Accounts = require('../models/accounts');
 const sessionRouter = express.Router();
 sessionRouter.use(bodyParser.json());
 

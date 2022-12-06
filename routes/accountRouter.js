@@ -37,7 +37,7 @@ accountRouter.route('/')
               account.save()
               res.statusCode = 200;
               res.setHeader('Content-Type', 'application/json');
-              res.json({success: true, status: 'Account added successful'});
+              res.json(account);
             });
         } else {
           if (accounts.userAccounts.some((account) => account.account_id.toString() === req.body.account_id)) {
@@ -49,7 +49,7 @@ accountRouter.route('/')
             accounts.save();
             res.statusCode = 200;
             res.setHeader('Content-Type', 'application/json');
-            res.json({success: true, status: 'Account added successful'});
+            res.json(accounts);
           }
         }
       });
