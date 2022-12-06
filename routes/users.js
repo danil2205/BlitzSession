@@ -39,9 +39,10 @@ router.post('/signup', cors.corsWithOptions, (req, res, next) => {
           return;
         }
         passport.authenticate('local')(req, res, () => {
+          const token = authenticate.getToken({_id: user._id});
           res.statusCode = 200;
           res.setHeader('Content-Type', 'application/json');
-          res.json({success: true, status: 'Registration successful'});
+          res.json({success: true, username: req.body.username, status: 'Registration successful', token: token});
         });
       });
     }
