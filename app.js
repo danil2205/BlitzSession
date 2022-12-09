@@ -7,7 +7,10 @@ const mongoose = require('mongoose');
 const config = require('./config');
 
 const url = config.mongoUrl;
-const connect = mongoose.connect(url);
+const connect = mongoose.connect(url, { 
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
 
 connect.then(() => {
   console.log('Connect correctly to the server');

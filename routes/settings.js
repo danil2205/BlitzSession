@@ -34,7 +34,7 @@ settingsRouter.route('/')
               res.json(settings);
             })
         } else {
-          Settings.findOneAndUpdate({'user': req.user._id}, req.body, (err, data) => {
+          Settings.findOneAndUpdate({'user': req.user._id}, req.body, { new: true }, (err, data) => {
             if (err) {
               const err = new Error('Error while getting info');
               err.status = 401;

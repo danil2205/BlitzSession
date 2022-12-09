@@ -14,14 +14,15 @@ sessionRouter.route('/')
   .get(cors.cors, authenticate.verifyUser, (req, res, next) => {
     Session.find({'user': req.user._id})
       .populate('user')
-      .then((accounts) => {
+      .then((session) => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
-        res.json(accounts);
+        res.json(session);
       }, (err) => next(err))
       .catch((err) => next(err));
   })
   .post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
+    Object.keys(req.body).map((key) => !req.body[key] ? req.body[key] = 0 : req.body[key]);
     Session.findOne({'user': req.user._id})
       .then((session) => {
         if (!session) {
@@ -34,7 +35,7 @@ sessionRouter.route('/')
               res.json(session);
             })
         } else {
-          Session.findOneAndUpdate({'user': req.user._id}, req.body, (err, data) => {
+          Session.findOneAndUpdate({'user': req.user._id}, req.body, { new: true }, (err, data) => {
             if (err) {
               const err = new Error('Error while getting info');
               err.status = 401;

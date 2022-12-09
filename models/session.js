@@ -8,6 +8,14 @@ const sessionSchema = new Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
   },
+  inGameNickname: {
+    type: String,
+    required: true,
+  },
+  account_id: {
+    type: Number,
+    required: true,
+  },
   battles: {
     type: Number,
     required: true,
@@ -17,7 +25,7 @@ const sessionSchema = new Schema({
     required: true,
   },
   wins: {
-    type: String,
+    type: Number,
     required: true,
   },
 }, {
