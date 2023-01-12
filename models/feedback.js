@@ -5,8 +5,8 @@ const Schema = mongoose.Schema;
 
 const feedbackSchema = new Schema({
   firstname: {
-      type: String,
-      required: true,
+    type: String,
+    required: true,
   },
   lastname: {
     type: String,
