@@ -12,7 +12,7 @@ sessionRouter.use(bodyParser.json());
 sessionRouter.route('/')
   .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
   .get(cors.cors, authenticate.verifyUser, (req, res, next) => {
-    Session.find({'user': req.user._id})
+    Session.find({ 'user': req.user._id })
       .populate('user')
       .then((session) => {
         res.statusCode = 200;
@@ -22,8 +22,7 @@ sessionRouter.route('/')
       .catch((err) => next(err));
   })
   .post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
-    Object.keys(req.body).map((key) => !req.body[key] ? req.body[key] = 0 : req.body[key]);
-    Session.findOne({'user': req.user._id})
+    Session.findOne({ 'user': req.user._id })
       .then((session) => {
         if (!session) {
           Session.create(req.body)
@@ -33,19 +32,19 @@ sessionRouter.route('/')
               res.statusCode = 200;
               res.setHeader('Content-Type', 'application/json');
               res.json(session);
-            })
+            });
         } else {
-          Session.findOneAndUpdate({'user': req.user._id}, req.body, { new: true }, (err, data) => {
+          Session.findOneAndUpdate({ 'user': req.user._id }, req.body, { new: true }, (err, data) => {
             if (err) {
               const err = new Error('Error while getting info');
               err.status = 401;
               return next(err);
             } else {
-                res.statusCode = 200;
-                res.setHeader('Content-Type', 'application/json');
-                res.json(data);
+              res.statusCode = 200;
+              res.setHeader('Content-Type', 'application/json');
+              res.json(data);
             }
-          })
+          });
         }
       }, (err) => next(err))
       .catch((err) => next(err));
@@ -54,7 +53,7 @@ sessionRouter.route('/')
     res.statusCode = 403;
     res.end('PUT operation is not supported on /session');
   })
-  .delete(cors.corsWithOptions, (req, res, next) => {
+  .delete(cors.corsWithOptions, (req, res) => {
     res.statusCode = 403;
     res.end('DELETE operation is not supported on /session');
   });

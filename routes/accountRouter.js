@@ -12,13 +12,13 @@ accountRouter.use(bodyParser.json());
 accountRouter.route('/')
   .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
   .get(cors.cors, authenticate.verifyUser, (req, res, next) => {
-    Accounts.find({'user': req.user._id})
-        .populate('user')
-        .then((accounts) => {
-          res.statusCode = 200;
-          res.setHeader('Content-Type', 'application/json');
-          res.json(accounts);
-        }, (err) => next(err))
+    Accounts.find({ 'user': req.user._id })
+      .populate('user')
+      .then((accounts) => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(accounts);
+      }, (err) => next(err))
       .catch((err) => next(err));
   })
   .post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
@@ -27,14 +27,14 @@ accountRouter.route('/')
       err.status = 401;
       return next(err);
     }
-    Accounts.findOne({'user': req.user._id})
+    Accounts.findOne({ 'user': req.user._id })
       .then((accounts) => {
         if (!accounts) {
           Accounts.create({})
             .then((account) => {
               account.user = req.user._id;
               account.userAccounts.push(req.body);
-              account.save()
+              account.save();
               res.statusCode = 200;
               res.setHeader('Content-Type', 'application/json');
               res.json(account);
@@ -59,7 +59,7 @@ accountRouter.route('/')
     res.end('PUT operation is not supported on /accounts');
   })
   .delete(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
-    Accounts.remove({'user': req.user._id})
+    Accounts.remove({ 'user': req.user._id })
       .then((resp) => {
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
@@ -70,11 +70,11 @@ accountRouter.route('/')
 
 accountRouter.route('/:accountID')
   .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
-  .get(cors.cors, (req, res, next) => {
+  .get(cors.cors, (req, res) => {
     res.statusCode = 403;
     res.end(`GET operation is not supported on /accounts/${req.params.accountID}`);
   })
-  .post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
+  .post(cors.corsWithOptions, authenticate.verifyUser, (req, res) => {
     res.statusCode = 403;
     res.end(`POST operation is not supported on /accounts/${req.params.accountID}`);
   })
@@ -83,11 +83,11 @@ accountRouter.route('/:accountID')
     res.end(`PUT operation is not supported on /accounts/${req.params.accountID}`);
   })
   .delete(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
-    Accounts.findOne({'user': req.user._id})
+    Accounts.findOne({ 'user': req.user._id })
       .then((account) => {
-        const index = account.userAccounts.findIndex((acc) => {
-          return acc.account_id.toString() === req.params.accountID;
-        });
+        const index = account.userAccounts.findIndex((acc) => (
+          acc.account_id.toString() === req.params.accountID
+        ));
         if (index !== -1) account.userAccounts.splice(index, 1);
         account.save()
           .then((acc) => {
