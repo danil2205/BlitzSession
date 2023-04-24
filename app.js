@@ -24,6 +24,7 @@ const usersRouter = require('./routes/users');
 const sessionRouter = require('./routes/sessionRouter');
 const contactRouter = require('./routes/contactRouter');
 const settingsRouter = require('./routes/settings');
+const tanksRouter = require('./routes/tanksRouter');
 
 const app = express();
 
@@ -57,6 +58,7 @@ app.use('/accounts', accountRouter);
 app.use('/session', sessionRouter);
 app.use('/contact', contactRouter);
 app.use('/settings', settingsRouter);
+app.use('/tanks', tanksRouter)
 
 app.use(express.static(path.join(__dirname, 'public')));
 
