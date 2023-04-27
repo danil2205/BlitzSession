@@ -70,23 +70,40 @@ const getTanksStats = async (account_id = 594859325) => {
     // another bug in wargaming api. they didn't added new tank in list of all tanks, so i need to check on undefined.
     if (tankInformation === undefined) return; 
 
-    const winrate = `${((tankStats.all.wins / tankStats.all.battles) * 100).toFixed(2)}%`;
+    const battles = tankStats.all.battles;
+    const winrate = ((tankStats.all.wins / tankStats.all.battles) * 100).toFixed(2);
     const avgDmg = ~~(tankStats.all.damage_dealt / tankStats.all.battles);
     const coefFrag = (tankStats.all.frags / tankStats.all.battles).toFixed(2);
-    const percentRemainHP = `${((1 - (tankStats.all.damage_received / tankStats.all.battles) / tankInformation.hp) * 100).toFixed(2)}%`;
+    const percentRemainHP = ((1 - (tankStats.all.damage_received / tankStats.all.battles) / tankInformation.hp) * 100).toFixed(2);
     const battlesForMaster = ~~(tankStats.all.battles / tankAchivs.mastery.markOfMastery);
-    const avgTimeInBattle = `${Math.floor((tankStats.battle_life_time / tankStats.all.battles) / 60)}m ${tankStats.battle_life_time % 60}s`;
-    const lastBattleTime = new Date(tankStats.last_battle_time * 1000).toLocaleDateString();
+    const avgTimeInBattleForSort = tankStats.battle_life_time / tankStats.all.battles;
+    const avgTimeInBattle = (
+      Math.floor(avgTimeInBattleForSort / 60) < 7 
+        ? `${Math.floor(avgTimeInBattleForSort / 60)}m ${~~(avgTimeInBattleForSort % 60)}s` 
+        : '~ 7m'
+    );
 
     res.data.push({
       ...tankInformation, 
-      ...{ winrate, avgDmg, coefFrag, percentRemainHP, battlesForMaster, avgTimeInBattle, lastBattleTime }, 
+      ...{ 
+        battles, 
+        winrate, 
+        avgDmg, 
+        coefFrag, 
+        percentRemainHP, 
+        battlesForMaster, 
+        avgTimeInBattle, 
+        avgTimeInBattleForSort, 
+        lastBattleTime: tankStats.last_battle_time
+      }, 
       ...tankAchivs 
     });
   });
 
   return res;
 };
+
+(async () => await getTanksStats())();
 
 module.exports = {
   getListTanks,
