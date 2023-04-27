@@ -21,6 +21,7 @@ const getListTanks = async () => {
       image: tank.images.preview
     });
   }
+  
   return cleanedList;
 };
 
@@ -64,9 +65,9 @@ const getTanksStats = async (account_id = 594859325) => {
     const winrate = `${((tankStats.all.wins / tankStats.all.battles) * 100).toFixed(2)}%`;
     const avgDmg = ~~(tankStats.all.damage_dealt / tankStats.all.battles);
     const coefFrag = (tankStats.all.frags / tankStats.all.battles).toFixed(2);
-    const percentRemainHP = `${(((tankStats.all.damage_received / tankStats.all.battles) / tankInformation?.hp) * 100).toFixed(2)}%`;
+    const percentRemainHP = `${((1 - (tankStats.all.damage_received / tankStats.all.battles) / tankInformation.hp) * 100).toFixed(2)}%`;
     const battlesForMaster = ~~(tankStats.all.battles / tankAchivs.mastery.markOfMastery);
-    const avgTimeInBattle = `${Math.floor(tankStats.battle_life_time / tankStats.all.battles)}m ${tankStats.battle_life_time % 60}s`;
+    const avgTimeInBattle = `${Math.floor((tankStats.battle_life_time / tankStats.all.battles) / 60)}m ${tankStats.battle_life_time % 60}s`;
 
     res.push({
       ...tankInformation, 
@@ -74,6 +75,7 @@ const getTanksStats = async (account_id = 594859325) => {
       ...tankAchivs 
     });
   });
+
   return res;
 };
 
