@@ -27,11 +27,11 @@ const getListTanks = async () => {
 
 const getTanksAchievments = async (account_id = 594859325) => {
   const achievmentsTanksURL = `https://api.wotblitz.eu/wotb/tanks/achievements/?application_id=${application_id}&account_id=${account_id}`;
-  const achievments = await fetch(achievmentsTanksURL).then((res) => res.json());
+  const { data: { [account_id]: achievments } } = await fetch(achievmentsTanksURL).then((res) => res.json());
   const res = [];
   // Bug in Wargaming API after transfering account on another server. 
   //After fetch I must already have tanks with achievments. But, on some tanks i have achievments = {}
-  const tanksWithAchievments = achievments.data[account_id].filter((tankAchievments) => Object.keys(tankAchievments.achievements).length > 0);  
+  const tanksWithAchievments = achievments.filter((tankAchievments) => Object.keys(tankAchievments.achievements).length > 0);  
   tanksWithAchievments.map((tankAchievments) => {
     res.push({
       tank_id: tankAchievments.tank_id,
@@ -48,14 +48,22 @@ const getTanksAchievments = async (account_id = 594859325) => {
 };
 
 const getTanksStats = async (account_id = 594859325) => {
+  const res = { status: null, data: [] };
   const statsTanksURL = `https://api.wotblitz.eu/wotb/tanks/stats/?application_id=${application_id}&account_id=${account_id}`;
-  const stats = await fetch(statsTanksURL).then((res) => res.json());
+  const { data: { [account_id]: stats } } = await fetch(statsTanksURL).then((res) => res.json());
+  // if account_id is invalid, it won't crash my server
+  if (!stats) {
+    res.status = 'fail';
+    return res;
+  } else {
+    res.status = 'ok';
+  }
+
   const achievements = await getTanksAchievments(account_id);
   const listOfTanks = await getListTanks();
-  const res = [];
   // Bug in Wargaming API after transfering account on another server. 
   // The same situation like with achievments, but now with statistic.
-  const tanksWithStats = stats.data[account_id].filter((tankStats) => tankStats.last_battle_time !== 0);
+  const tanksWithStats = stats.filter((tankStats) => tankStats.last_battle_time !== 0);
   tanksWithStats.map((tankStats) => {
     const tankAchivs = achievements.find((tankAchievments) => tankAchievments.tank_id === tankStats.tank_id);
     const tankInformation = listOfTanks.find((tankInfo) => tankInfo.tank_id === tankStats.tank_id);
@@ -69,11 +77,11 @@ const getTanksStats = async (account_id = 594859325) => {
     const battlesForMaster = ~~(tankStats.all.battles / tankAchivs.mastery.markOfMastery);
     const avgTimeInBattle = `${Math.floor((tankStats.battle_life_time / tankStats.all.battles) / 60)}m ${tankStats.battle_life_time % 60}s`;
 
-    res.push({
+    res.data.push({
       ...tankInformation, 
       ...{ winrate, avgDmg, coefFrag, percentRemainHP, battlesForMaster, avgTimeInBattle }, 
       ...tankAchivs 
-    });
+    })
   });
 
   return res;
