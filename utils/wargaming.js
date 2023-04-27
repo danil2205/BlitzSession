@@ -76,12 +76,13 @@ const getTanksStats = async (account_id = 594859325) => {
     const percentRemainHP = `${((1 - (tankStats.all.damage_received / tankStats.all.battles) / tankInformation.hp) * 100).toFixed(2)}%`;
     const battlesForMaster = ~~(tankStats.all.battles / tankAchivs.mastery.markOfMastery);
     const avgTimeInBattle = `${Math.floor((tankStats.battle_life_time / tankStats.all.battles) / 60)}m ${tankStats.battle_life_time % 60}s`;
+    const lastBattleTime = new Date(tankStats.last_battle_time * 1000).toLocaleDateString();
 
     res.data.push({
       ...tankInformation, 
-      ...{ winrate, avgDmg, coefFrag, percentRemainHP, battlesForMaster, avgTimeInBattle }, 
+      ...{ winrate, avgDmg, coefFrag, percentRemainHP, battlesForMaster, avgTimeInBattle, lastBattleTime }, 
       ...tankAchivs 
-    })
+    });
   });
 
   return res;
