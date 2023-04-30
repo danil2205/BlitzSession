@@ -76,15 +76,13 @@ const getTanksStats = async (account_id = 594859325) => {
     tanksWithStats.map((tankStats) => {
       const tankAchivs = achievements.find((tankAchievments) => tankAchievments.tank_id === tankStats.tank_id);
       const tankInformation = listOfTanks.find((tankInfo) => tankInfo.tank_id === tankStats.tank_id);
-      // another bug in wargaming api. they didn't added new tank in list of all tanks, so i need to check on undefined.
-      if (tankInformation === undefined) return; 
 
       const battles = tankStats.all.battles;
       const winrate = ((tankStats.all.wins / tankStats.all.battles) * 100).toFixed(2);
       const avgDmg = ~~(tankStats.all.damage_dealt / tankStats.all.battles);
       const coefFrag = (tankStats.all.frags / tankStats.all.battles).toFixed(2);
-      const percentRemainHP = ((1 - (tankStats.all.damage_received / tankStats.all.battles) / tankInformation.hp) * 100).toFixed(2);
-      const battlesForMaster = ~~(tankStats.all.battles / tankAchivs.mastery.markOfMastery);
+      const percentRemainHP = ((1 - (tankStats.all.damage_received / tankStats.all.battles) / tankInformation?.hp) * 100).toFixed(2);
+      const battlesForMaster = ~~(tankStats.all.battles / tankAchivs?.mastery?.markOfMastery);
       const avgTimeInBattleForSort = tankStats.battle_life_time / tankStats.all.battles;
       const avgTimeInBattle = (
         Math.floor(avgTimeInBattleForSort / 60) < 7 
@@ -96,10 +94,10 @@ const getTanksStats = async (account_id = 594859325) => {
         ...tankInformation, 
         ...{ 
           battles, 
-          winrate, 
+          winrate: isNaN(winrate) ? '0.00' : winrate,
           avgDmg, 
-          coefFrag, 
-          percentRemainHP, 
+          coefFrag: isNaN(coefFrag) ? '0.00' : coefFrag,
+          percentRemainHP: isNaN(percentRemainHP) ? '0.00' : percentRemainHP,
           battlesForMaster, 
           avgTimeInBattle, 
           avgTimeInBattleForSort, 
