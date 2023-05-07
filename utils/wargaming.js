@@ -161,8 +161,6 @@ const postPlayerSnapshots = async (account_id = 594859325) => {
     console.error(err);
   }
 };
-  
-(async () => console.dir(await postPlayerSnapshots(), { depth: null }))();
 
 module.exports = {
   getListTanks,
