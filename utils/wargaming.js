@@ -19,7 +19,7 @@ const getListTanks = async () => {
         type: tank.type,
         isPremium: tank.is_premium,
         hp: tank.default_profile.hp,
-        image: tank.images.preview
+        image: tank.images.normal
       });
     }
     
@@ -56,7 +56,7 @@ const getTanksAchievments = async (account_id = 594859325) => {
 };
 
 const getTanksStats = async (account_id = 594859325) => {
-  const res = { status: null, data: [] };
+  const res = { status: null, account_id, data: [] };
   const statsTanksURL = `https://api.wotblitz.eu/wotb/tanks/stats/?application_id=${application_id}&account_id=${account_id}`;
   try {
     const { data: { [account_id]: stats } } = await fetch(statsTanksURL).then((res) => res.json());
@@ -113,8 +113,60 @@ const getTanksStats = async (account_id = 594859325) => {
   }
 };
 
+const postPlayerSnapshots = async (account_id = 594859325) => {
+  const res = { success: null, data: {} };
+  const playerStatsURL = `https://api.wotblitz.eu/wotb/account/info/?application_id=${application_id}&account_id=${account_id}&extra=statistics.rating`;
+  const playerAchievmentsURL = `https://api.wotblitz.eu/wotb/account/achievements/?application_id=${application_id}&account_id=${account_id}`
+  try {
+    const { data: { [account_id]: playerStats } } = await fetch(playerStatsURL).then((res) => res.json());
+    const { data: { [account_id]: playerAchievments } } = await fetch(playerAchievmentsURL).then((res) => res.json());
+
+    if (!playerStats || !playerAchievments) {
+      res.success = false;
+      return res;
+    } else {
+      res.success = true;
+    }
+
+    res.data = {
+      createdAt: playerStats.created_at,
+      name: playerStats.nickname,
+      accountId: playerStats.account_id,
+      snapshots: [{
+        lastBattleTime: playerStats.last_battle_time,
+        regular: {
+          battles: playerStats.statistics.all.battles,
+          wins: playerStats.statistics.all.wins,
+          losses: playerStats.statistics.all.losses,
+          damageDealt: playerStats.statistics.all.damage_dealt,
+          damageReceived: playerStats.statistics.all.damage_received,
+          survivedBattles: playerStats.statistics.all.survived_battles,
+          spotted: playerStats.statistics.all.spotted,
+          frags: playerStats.statistics.all.frags,
+        },
+        rating: {
+          battles: playerStats.statistics.rating.battles,
+        },
+        mastery: {
+          markOfMastery: playerAchievments.achievements.markOfMastery,
+          markOfMasteryI: playerAchievments.achievements.markOfMasteryI,
+          markOfMasteryII: playerAchievments.achievements.markOfMasteryII,
+          markOfMasteryIII: playerAchievments.achievements.markOfMasteryIII,
+        },
+      }],
+    }
+
+    return res;
+  } catch (err) {
+    console.error(err);
+  }
+};
+  
+(async () => console.dir(await postPlayerSnapshots(), { depth: null }))();
+
 module.exports = {
   getListTanks,
   getTanksStats,
-  getTanksAchievments
+  getTanksAchievments,
+  postPlayerSnapshots,
 };
