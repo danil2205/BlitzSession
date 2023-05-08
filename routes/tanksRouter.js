@@ -5,8 +5,9 @@ const bodyParser = require('body-parser');
 const authenticate = require('../authenticate');
 const cors = require('./cors');
 const { getListTanks, getTanksStats, postPlayerSnapshots, } = require('../utils/wargaming.js');
-
+const { isSameDay } = require('../utils/time');
 const PlayerStats = require('../models/playerStats.js');
+
 const tanksRouter = express.Router();
 tanksRouter.use(bodyParser.json());
 
@@ -31,8 +32,13 @@ tanksRouter.route('/:accountID')
               res.json(player);
             });
         } else {
-          if (playerStats.data.snapshots.at(-1).lastBattleTime !== statsToAdd.data.snapshots.lastBattleTime) {
-            playerStats.data.snapshots.push(statsToAdd.data.snapshots[0])
+          const snapshotsDB = playerStats.data.snapshots;
+          const snapshotToAdd = statsToAdd.data.snapshots[0];
+          if (snapshotsDB.at(-1).lastBattleTime !== snapshotToAdd.lastBattleTime) {
+            isSameDay(snapshotsDB.at(-1).lastBattleTime, snapshotToAdd.lastBattleTime) ? 
+              snapshotsDB.splice(-1, 1, snapshotToAdd) : 
+              snapshotsDB.push(snapshotToAdd);
+
             playerStats.save();
             res.statusCode = 200;
             res.setHeader('Content-Type', 'application/json');
@@ -43,8 +49,7 @@ tanksRouter.route('/:accountID')
             res.json(playerStats);
           }
         }
-      })
-
-  })
+      });
+  });
 
 module.exports = tanksRouter;
