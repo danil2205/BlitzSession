@@ -9,8 +9,22 @@ const playerStatsSchema = new Schema({
     ref: 'User',
   },
   data: {
-    type: Object,
-    required: true,
+    createdAt: {
+      type: Number,
+      required: true,
+    },
+    name: {
+      type: String,
+      required: true,
+    },
+    accountId: {
+      type: Number,
+      required: true,
+    },
+    snapshots: {
+      type: Array,
+      required: true,
+    },
   },
   success: {
     type: Boolean,

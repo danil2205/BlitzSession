@@ -31,7 +31,7 @@ tanksRouter.route('/:accountID')
               res.json(player);
             });
         } else {
-          if (playerStats.data.snapshots.at(-1).lastBattleTime === statsToAdd.data.snapshots.lastBattleTime) {
+          if (playerStats.data.snapshots.at(-1).lastBattleTime !== statsToAdd.data.snapshots.lastBattleTime) {
             playerStats.data.snapshots.push(statsToAdd.data.snapshots[0])
             playerStats.save();
             res.statusCode = 200;

@@ -62,10 +62,10 @@ const getTanksStats = async (account_id = 594859325) => {
     const { data: { [account_id]: stats } } = await fetch(statsTanksURL).then((res) => res.json());
     // if account_id is invalid, it won't crash my server
     if (!stats) {
-      res.status = 'fail';
+      res.status = false;
       return res;
     } else {
-      res.status = 'ok';
+      res.status = true;
     }
 
     const achievements = await getTanksAchievments(account_id);
