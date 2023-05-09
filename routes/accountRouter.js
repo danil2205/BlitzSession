@@ -4,8 +4,11 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const authenticate = require('../authenticate');
 const cors = require('./cors');
-
+const { postPlayerSnapshots } = require('../utils/wargaming.js');
+const { isSameDay } = require('../utils/time');
 const Accounts = require('../models/accounts');
+const AccountStats = require('../models/accountStats.js');
+
 const accountRouter = express.Router();
 accountRouter.use(bodyParser.json());
 
@@ -74,9 +77,36 @@ accountRouter.route('/:accountID')
     res.statusCode = 403;
     res.end(`GET operation is not supported on /accounts/${req.params.accountID}`);
   })
-  .post(cors.corsWithOptions, authenticate.verifyUser, (req, res) => {
-    res.statusCode = 403;
-    res.end(`POST operation is not supported on /accounts/${req.params.accountID}`);
+  .post(cors.corsWithOptions, authenticate.verifyUser, async (req, res, next) => {
+    const statsToAdd = await postPlayerSnapshots(req.params.accountID);
+    AccountStats.findOne({ 'data.accountId': req.params.accountID })
+      .then((playerStats) => {
+        if (!playerStats) {
+          AccountStats.create(statsToAdd)
+            .then((player) => {
+              res.statusCode = 200;
+              res.setHeader('Content-Type', 'application/json');
+              res.json(player);
+            });
+        } else {
+          const snapshotsDB = playerStats.data.snapshots;
+          const snapshotToAdd = statsToAdd.data.snapshots[0];
+          if (snapshotsDB.at(-1).lastBattleTime !== snapshotToAdd.lastBattleTime) {
+            isSameDay(snapshotsDB.at(-1).lastBattleTime, snapshotToAdd.lastBattleTime) ? 
+              snapshotsDB.splice(-1, 1, snapshotToAdd) : 
+              snapshotsDB.push(snapshotToAdd);
+
+            playerStats.save();
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            res.json(playerStats);
+          } else {
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            res.json(playerStats);
+          }
+        }
+      });
   })
   .put(cors.corsWithOptions, authenticate.verifyUser, (req, res) => {
     res.statusCode = 403;
