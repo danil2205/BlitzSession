@@ -20,7 +20,7 @@ tanksRouter.route('/:accountID')
   .get(cors.cors, async (req, res) => res.json(await getTanksStats(req.params.accountID)))
   .post(cors.corsWithOptions, authenticate.verifyUser, async (req, res, next) => {
     const statsToAdd = await postPlayerSnapshots(req.params.accountID);
-    PlayerStats.findOne({ 'user': req.user._id })
+    PlayerStats.findOne({ 'accountId': req.params.accountID })
       .then((playerStats) => {
         if (!playerStats) {
           PlayerStats.create(statsToAdd)
