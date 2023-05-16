@@ -20,6 +20,9 @@ tanksRouter.route('/:accountID')
   .get(cors.cors, async (req, res) => res.json(await postTanksSnapshots(req.params.accountID)))
   .post(cors.corsWithOptions, authenticate.verifyUser, async (req, res, next) => {
     const statsToAdd = await postTanksSnapshots(req.params.accountID);
+    if (!statsToAdd.status) { // if bad data
+      return res.status(404).json(statsToAdd)
+    };
     statsToAdd.data = statsToAdd.data.filter((tankStats) => tankStats.tank_id);
     TankStats.findOne({ 'account_id': req.params.accountID })
       .then((tankStats) => {
@@ -29,24 +32,26 @@ tanksRouter.route('/:accountID')
               res.statusCode = 200;
               res.setHeader('Content-Type', 'application/json');
               res.json(tanks);
-            });
+            })
+            .catch((err) => console.log(err));
         } else {
           const dataFromDB = tankStats.data;
-          tankStats.data.map((tankFromDB) => {
+          dataFromDB.map((tankFromDB) => {
             const snapshotToAdd = statsToAdd.data.find((tankFromStats) => tankFromStats.tank_id === tankFromDB.tank_id);
             if (!snapshotToAdd) return;
             if (snapshotToAdd.snapshots[0].lastBattleTime !== tankFromDB.snapshots.at(-1).lastBattleTime) {
               isSameDay(tankFromDB.snapshots.at(-1).lastBattleTime, snapshotToAdd.snapshots[0].lastBattleTime) ? 
               tankFromDB.snapshots.splice(-1, 1, snapshotToAdd.snapshots[0]) : 
               tankFromDB.snapshots.push(snapshotToAdd.snapshots[0]);
-            } 
+            }
           });
           tankStats.save();
           res.statusCode = 200;
           res.setHeader('Content-Type', 'application/json');
           res.json(tankStats);
         }
-      });
+      })
+      .catch((err) => console.log(err));
   });
 
 module.exports = tanksRouter;
