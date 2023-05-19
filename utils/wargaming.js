@@ -138,6 +138,8 @@ const postPlayerSnapshots = async (account_id = 594859325) => {
         },
         rating: {
           battles: playerStats.statistics.rating.battles,
+          wins: playerStats.statistics.rating.wins,
+          damageDealt: playerStats.statistics.rating.damage_dealt,
         },
         mastery: {
           markOfMastery: playerAchievments.achievements.markOfMastery,

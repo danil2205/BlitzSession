@@ -73,14 +73,24 @@ accountRouter.route('/')
 
 accountRouter.route('/:accountID')
   .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
-  .get(cors.cors, (req, res) => {
-    res.statusCode = 403;
-    res.end(`GET operation is not supported on /accounts/${req.params.accountID}`);
+  .get(cors.cors, (req, res, next) => {
+    AccountStats.findOne({ 'data.accountId': req.params.accountID })
+      .then((accountStats) => {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(accountStats);
+      }, (err) => next(err))
+      .catch((err) => next(err));
   })
   .post(cors.corsWithOptions, authenticate.verifyUser, async (req, res, next) => {
     const statsToAdd = await postPlayerSnapshots(req.params.accountID);
     AccountStats.findOne({ 'data.accountId': req.params.accountID })
       .then((playerStats) => {
+        if (!statsToAdd) {
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          return res.json(playerStats);
+        }
         if (!playerStats) {
           AccountStats.create(statsToAdd)
             .then((player) => {
