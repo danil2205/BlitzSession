@@ -12,15 +12,40 @@ const statsNames = ['battles', 'damage_dealt', 'damage_received', 'frags', 'spot
 const achievementsName = ['markOfMastery', 'markOfMasteryI', 'markOfMasteryII', 'markOfMasteryIII'];
 const getStatsObject = (statsName, stats) => Object.fromEntries(statsName.map((statName) => [statName, stats[statName] || 0]));
 
-const getPlayerInfo = async (url) => {
+const getInfo = async (url) => {
   try {
     const response = await fetch(url);
     const data = await response.json();
-    const playerInfo = data.data;
-    return playerInfo;
+    return data.data;
   } catch (error) {
     console.error('Error:', error);
   }
+};
+
+const getVehicleStats = async (accountId) => {
+  const result = {};
+  const vehicleStatsURL = `${BASE_URL}/tanks/stats/?application_id=${application_id}&account_id=${accountId}`;
+  const vehicleAchievmentsURL = `${BASE_URL}/tanks/achievements/?application_id=${application_id}&account_id=${accountId}`;
+  const vehicleStats = await getInfo(vehicleStatsURL);
+  const vehicleAchievments = await getInfo(vehicleAchievmentsURL);
+
+  const stats = vehicleStats[accountId];
+  const achievements = vehicleAchievments[accountId];
+
+  if (!stats || !achievements ) return;
+
+  stats.map((tankStats) => {
+    const regular = getStatsObject(statsNames, tankStats.all);
+    result[tankStats.tank_id] = { regular };
+  });
+
+  achievements.map((tankAchivements) => {
+    const mastery = getStatsObject(achievementsName, tankAchivements.achievements);
+    result[tankAchivements.tank_id] = {...result[tankAchivements.tank_id], mastery };
+  });
+
+  console.log(result)
+  return result;
 };
 
 const fetchPlayerStats = async (playerIds) => {
@@ -28,12 +53,13 @@ const fetchPlayerStats = async (playerIds) => {
   const playerAchievmentsURL = `${BASE_URL}/account/achievements/?application_id=${application_id}&account_id=${playerIds.join(',')}`;
 
   try {
-    const playerStats = await getPlayerInfo(playerStatsURL);
-    const playerAchievments = await getPlayerInfo(playerAchievmentsURL);
+    const playerStats = await getInfo(playerStatsURL);
+    const playerAchievments = await getInfo(playerAchievmentsURL);
 
     for (const accountId in playerStats) {
       const stats = playerStats[accountId]?.statistics;
       const achievements = playerAchievments[accountId]?.achievements;
+      const vehicleStats = await getVehicleStats(accountId);
 
       if (!stats || !achievements) continue;
       const regularStats = stats.all;
@@ -44,7 +70,7 @@ const fetchPlayerStats = async (playerIds) => {
         allPlayerStats.rating = getStatsObject(statsNames, ratingStats);
         allPlayerStats.mastery = getStatsObject(achievementsName, achievements);
       }
-      console.log(allPlayerStats);
+      // console.log(allPlayerStats);
       statsNames.map((statName) => {
           allPlayerStats.regular[statName] = allPlayerStats.regular[statName] + regularStats[statName];
           allPlayerStats.rating[statName] = allPlayerStats.rating[statName] + ratingStats[statName];
