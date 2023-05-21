@@ -6,9 +6,9 @@ const path = require('path');
 const logger = require('morgan');
 const passport = require('passport');
 const mongoose = require('mongoose');
-const config = require('./config');
+require('dotenv').config();
 
-const url = config.mongoUrl;
+const url = process.env.mongoUrl;
 const connect = mongoose.connect(url, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -58,7 +58,7 @@ app.use('/accounts', accountRouter);
 app.use('/session', sessionRouter);
 app.use('/contact', contactRouter);
 app.use('/settings', settingsRouter);
-app.use('/tanks', tanksRouter)
+app.use('/tanks', tanksRouter);
 
 app.use(express.static(path.join(__dirname, 'public')));
 

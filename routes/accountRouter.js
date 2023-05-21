@@ -4,8 +4,11 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const authenticate = require('../authenticate');
 const cors = require('./cors');
-
+const { postPlayerSnapshots } = require('../utils/wargaming.js');
+const { isSameDay } = require('../utils/time');
 const Accounts = require('../models/accounts');
+const AccountStats = require('../models/accountStats.js');
+
 const accountRouter = express.Router();
 accountRouter.use(bodyParser.json());
 
@@ -70,13 +73,53 @@ accountRouter.route('/')
 
 accountRouter.route('/:accountID')
   .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
-  .get(cors.cors, (req, res) => {
-    res.statusCode = 403;
-    res.end(`GET operation is not supported on /accounts/${req.params.accountID}`);
+  .get(cors.cors, async (req, res, next) => {
+      try {
+        const accountStats = await AccountStats.findOne({ 'data.accountId': req.params.accountID });
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(accountStats);
+      } catch (err) {
+        next(err);
+      }
   })
-  .post(cors.corsWithOptions, authenticate.verifyUser, (req, res) => {
-    res.statusCode = 403;
-    res.end(`POST operation is not supported on /accounts/${req.params.accountID}`);
+  .post(cors.corsWithOptions, authenticate.verifyUser, async (req, res, next) => {
+    try {
+      const statsToAdd = await postPlayerSnapshots(req.params.accountID);
+      const playerStats = await AccountStats.findOne({ 'data.accountId': req.params.accountID });
+
+      if (!statsToAdd) {
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        return res.json(playerStats);
+      }
+
+      if (!playerStats) {
+        const createdPlayer = await AccountStats.create(statsToAdd);
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        return res.json(createdPlayer);
+      }
+
+      const snapshotsDB = playerStats.data.snapshots;
+      const snapshotToAdd = statsToAdd.data.snapshots[0];
+
+      if (snapshotsDB.at(-1).lastBattleTime !== snapshotToAdd.lastBattleTime) {
+        if (isSameDay(snapshotsDB.at(-1).lastBattleTime, snapshotToAdd.lastBattleTime)) {
+          snapshotsDB.splice(-1, 1, snapshotToAdd);
+        } else {
+          snapshotsDB.push(snapshotToAdd);
+        }
+
+        await playerStats.save();
+     }
+
+    res.statusCode = 200;
+    res.setHeader('Content-Type', 'application/json');
+    res.json(playerStats);
+  } catch (err) {
+    next(err);
+  }
   })
   .put(cors.corsWithOptions, authenticate.verifyUser, (req, res) => {
     res.statusCode = 403;

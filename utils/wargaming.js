@@ -55,7 +55,7 @@ const getTanksAchievments = async (account_id = 594859325) => {
   }
 };
 
-const getTanksStats = async (account_id = 594859325) => {
+const postTanksSnapshots = async (account_id = 594859325) => {
   const res = { status: null, account_id, data: [] };
   const statsTanksURL = `https://api.wotblitz.eu/wotb/tanks/stats/?application_id=${application_id}&account_id=${account_id}`;
   try {
@@ -77,33 +77,25 @@ const getTanksStats = async (account_id = 594859325) => {
       const tankAchivs = achievements.find((tankAchievments) => tankAchievments.tank_id === tankStats.tank_id);
       const tankInformation = listOfTanks.find((tankInfo) => tankInfo.tank_id === tankStats.tank_id);
 
-      const battles = tankStats.all.battles;
-      const winrate = ((tankStats.all.wins / tankStats.all.battles) * 100).toFixed(2);
-      const avgDmg = ~~(tankStats.all.damage_dealt / tankStats.all.battles);
-      const coefFrag = (tankStats.all.frags / tankStats.all.battles).toFixed(2);
-      const percentRemainHP = ((1 - (tankStats.all.damage_received / tankStats.all.battles) / tankInformation?.hp) * 100).toFixed(2);
-      const battlesForMaster = ~~(tankStats.all.battles / tankAchivs?.mastery?.markOfMastery);
-      const avgTimeInBattleForSort = tankStats.battle_life_time / tankStats.all.battles;
-      const avgTimeInBattle = (
-        Math.floor(avgTimeInBattleForSort / 60) < 7 
-          ? `${Math.floor(avgTimeInBattleForSort / 60)}m ${~~(avgTimeInBattleForSort % 60)}s` 
-          : '~ 7m'
-      );
+      if (!tankAchivs || !tankInformation?.image) return;
 
       res.data.push({
         ...tankInformation, 
-        ...{ 
-          battles, 
-          winrate: isNaN(winrate) ? '0.00' : winrate,
-          avgDmg, 
-          coefFrag: isNaN(coefFrag) ? '0.00' : coefFrag,
-          percentRemainHP: isNaN(percentRemainHP) ? '0.00' : percentRemainHP,
-          battlesForMaster, 
-          avgTimeInBattle, 
-          avgTimeInBattleForSort, 
-          lastBattleTime: tankStats.last_battle_time
-        }, 
-        ...tankAchivs 
+        snapshots: [{
+          battleLifeTime: tankStats.battle_life_time,
+          lastBattleTime: tankStats.last_battle_time,
+          mastery: tankAchivs.mastery,
+          regular: { 
+            battles: tankStats.all.battles, 
+            wins: tankStats.all.wins,
+            losses: tankStats.all.losses, 
+            damageDealt: tankStats.all.damage_dealt,
+            damageReceived: tankStats.all.damage_received,
+            frags: tankStats.all.frags,
+            spotted: tankStats.all.spotted,
+            survivedBattles: tankStats.all.survived_battles,
+          }
+        }],
       });
     });
 
@@ -146,6 +138,8 @@ const postPlayerSnapshots = async (account_id = 594859325) => {
         },
         rating: {
           battles: playerStats.statistics.rating.battles,
+          wins: playerStats.statistics.rating.wins,
+          damageDealt: playerStats.statistics.rating.damage_dealt,
         },
         mastery: {
           markOfMastery: playerAchievments.achievements.markOfMastery,
@@ -164,7 +158,7 @@ const postPlayerSnapshots = async (account_id = 594859325) => {
 
 module.exports = {
   getListTanks,
-  getTanksStats,
+  postTanksSnapshots,
   getTanksAchievments,
   postPlayerSnapshots,
 };
