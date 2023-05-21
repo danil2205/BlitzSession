@@ -6,7 +6,7 @@ const application_id = 'd78e7f67147305f3042bef05755fa168';
 const MAX_ACCOUNTS_PER_REQUEST = 100;
 const TOTAL_ACCOUNTS = 594859325;
 const BASE_URL = 'https://api.wotblitz.eu/wotb';
-const allPlayerStats = {};
+const allPlayerStats = { account: {}, tanks: [] };
 
 const statsNames = ['battles', 'damage_dealt', 'damage_received', 'frags', 'spotted', 'wins', 'losses', 'survived_battles'];
 const achievementsName = ['markOfMastery', 'markOfMasteryI', 'markOfMasteryII', 'markOfMasteryIII'];
@@ -36,16 +36,15 @@ const getVehicleStats = async (accountId) => {
 
   stats.map((tankStats) => {
     const regular = getStatsObject(statsNames, tankStats.all);
-    result[tankStats.tank_id] = { regular };
+    result[tankStats.tank_id] = { regular, battleLifeTime: tankStats.battle_life_time };
   });
 
   achievements.map((tankAchivements) => {
     const mastery = getStatsObject(achievementsName, tankAchivements.achievements);
-    result[tankAchivements.tank_id] = {...result[tankAchivements.tank_id], mastery };
+    result[tankAchivements.tank_id].mastery = mastery;
   });
 
-  console.log(result)
-  return result;
+  return Object.entries(result).map(([wotId, data]) => ({ wotId, ...data }));
 };
 
 const fetchPlayerStats = async (playerIds) => {
@@ -65,19 +64,38 @@ const fetchPlayerStats = async (playerIds) => {
       const regularStats = stats.all;
       const ratingStats = stats.rating;
 
-      if (!allPlayerStats.regular) {
-        allPlayerStats.regular = getStatsObject(statsNames, regularStats);
-        allPlayerStats.rating = getStatsObject(statsNames, ratingStats);
-        allPlayerStats.mastery = getStatsObject(achievementsName, achievements);
+      if (JSON.stringify(allPlayerStats.account) === '{}') {
+        allPlayerStats.account.regular = getStatsObject(statsNames, regularStats);
+        allPlayerStats.account.rating = getStatsObject(statsNames, ratingStats);
+        allPlayerStats.account.mastery = getStatsObject(achievementsName, achievements);
       }
-      // console.log(allPlayerStats);
+
+      if (!allPlayerStats.tanks.length && vehicleStats) allPlayerStats.tanks.push(...vehicleStats);
+      else if (vehicleStats) {
+        vehicleStats.map((vehicle) => {
+          const { wotId, regular, battleLifeTime, mastery } = vehicle;
+          if (allPlayerStats.tanks.find((tank) => tank.wotId === wotId)) {
+            const existingTank = allPlayerStats.tanks.find((tank) => tank.wotId === wotId);
+            statsNames.map((statName) => {
+              existingTank.regular[statName] += regular[statName];
+            });
+            achievementsName.map((achievementName) => {
+              existingTank.mastery[achievementName] += mastery[achievementName] || 0;
+            });
+          } else {
+            allPlayerStats.tanks.push({ wotId, regular, battleLifeTime, mastery });
+          }
+        });
+      }
+
       statsNames.map((statName) => {
-          allPlayerStats.regular[statName] = allPlayerStats.regular[statName] + regularStats[statName];
-          allPlayerStats.rating[statName] = allPlayerStats.rating[statName] + ratingStats[statName];
+        allPlayerStats.account.regular[statName] = allPlayerStats.account.regular[statName] + regularStats[statName];
+        allPlayerStats.account.rating[statName] = allPlayerStats.account.rating[statName] + ratingStats[statName];
       });
-      achievementsName.map((achievmentName) => {
-        allPlayerStats.mastery[achievmentName] = allPlayerStats.mastery[achievmentName] + (achievements[achievmentName] || 0);
-    });
+      achievementsName.map((achievementName) => {
+        allPlayerStats.account.mastery[achievementName] = allPlayerStats.account.mastery[achievementName] + (achievements[achievementName] || 0);
+      });
+      console.log(JSON.stringify(allPlayerStats));
     }
   } catch (error) {
     console.error('Error:', error);
