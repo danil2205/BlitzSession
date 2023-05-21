@@ -24,34 +24,33 @@ tanksRouter.route('/:accountID')
       return res.status(404).json(statsToAdd)
     };
     statsToAdd.data = statsToAdd.data.filter((tankStats) => tankStats.tank_id);
-    TankStats.findOne({ 'account_id': req.params.accountID })
-      .then((tankStats) => {
-        if (!tankStats) {
-          TankStats.create(statsToAdd)
-            .then((tanks) => {
-              res.statusCode = 200;
-              res.setHeader('Content-Type', 'application/json');
-              res.json(tanks);
-            })
-            .catch((err) => console.log(err));
-        } else {
-          const dataFromDB = tankStats.data;
-          dataFromDB.map((tankFromDB) => {
-            const snapshotToAdd = statsToAdd.data.find((tankFromStats) => tankFromStats.tank_id === tankFromDB.tank_id);
-            if (!snapshotToAdd) return;
-            if (snapshotToAdd.snapshots[0].lastBattleTime !== tankFromDB.snapshots.at(-1).lastBattleTime) {
-              isSameDay(tankFromDB.snapshots.at(-1).lastBattleTime, snapshotToAdd.snapshots[0].lastBattleTime) ? 
-              tankFromDB.snapshots.splice(-1, 1, snapshotToAdd.snapshots[0]) : 
-              tankFromDB.snapshots.push(snapshotToAdd.snapshots[0]);
-            }
-          });
-          tankStats.save();
-          res.statusCode = 200;
-          res.setHeader('Content-Type', 'application/json');
-          res.json(tankStats);
+    try {
+      const tankStats = await TankStats.findOne({ 'account_id': req.params.accountID  });
+
+      if (!tankStats) {
+        const createdTanks = await TankStats.create(statsToAdd);
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        return res.json(createdTanks);
+      }
+      const dataFromDB = tankStats.data;
+      dataFromDB.map((tankFromDB) => {
+        const snapshotToAdd = statsToAdd.data.find((tankFromStats) => tankFromStats.tank_id === tankFromDB.tank_id);
+        if (!snapshotToAdd) return;
+        if (snapshotToAdd.snapshots[0].lastBattleTime !== tankFromDB.snapshots.at(-1).lastBattleTime) {
+          if (isSameDay(tankFromDB.snapshots.at(-1).lastBattleTime, snapshotToAdd.snapshots[0].lastBattleTime)) {
+            tankFromDB.snapshots.splice(-1, 1, snapshotToAdd.snapshots[0]);
+          } else {
+            tankFromDB.snapshots.push(snapshotToAdd.snapshots[0]);
+          }
         }
-      })
-      .catch((err) => console.log(err));
+      });
+
+      await tankStats.save();
+      res.status(200).json(tankStats);
+    } catch (err) {
+      console.log(err);
+    }
   });
 
 module.exports = tanksRouter;
