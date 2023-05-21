@@ -73,7 +73,7 @@ accountRouter.route('/')
 
 accountRouter.route('/:accountID')
   .options(cors.corsWithOptions, (req, res) => { res.sendStatus(200); })
-  .get(cors.cors, (req, res, next) => {
+  .get(cors.cors, async (req, res, next) => {
       try {
         const accountStats = await AccountStats.findOne({ 'data.accountId': req.params.accountID });
         res.statusCode = 200;
@@ -120,7 +120,6 @@ accountRouter.route('/:accountID')
   } catch (err) {
     next(err);
   }
-});
   })
   .put(cors.corsWithOptions, authenticate.verifyUser, (req, res) => {
     res.statusCode = 403;

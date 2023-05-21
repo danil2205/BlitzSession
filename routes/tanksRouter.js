@@ -25,40 +25,32 @@ tanksRouter.route('/:accountID')
     };
     statsToAdd.data = statsToAdd.data.filter((tankStats) => tankStats.tank_id);
     try {
-      const tankStats = await TankStats.findOne({ 'account_id': req.params.accountID 
+      const tankStats = await TankStats.findOne({ 'account_id': req.params.accountID  });
 
       if (!tankStats) {
         const createdTanks = await TankStats.create(statsToAdd);
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
         return res.json(createdTanks);
-    }
-              res.json(tanks);
-            })
-            .catch((err) => console.log(err));
-        } else {
-          const dataFromDB = tankStats.data;
-          dataFromDB.map((tankFromDB) => {
-            const snapshotToAdd = statsToAdd.data.find((tankFromStats) => tankFromStats.tank_id === tankFromDB.tank_id);
-            if (!snapshotToAdd) return;
-            if (snapshotToAdd.snapshots[0].lastBattleTime !== tankFromDB.snapshots.at(-1).lastBattleTime) {
-              tankFromDB.snapshots.push(snapshotToAdd.snapshots[0]);
-            }
-              if (isSameDay(tankFromDB.snapshots.at(-1).lastBattleTime, snapshotToAdd.snapshots[0].lastBattleTime)) {
-          });
-                tankFromDB.snapshots.splice(-1, 1, snapshotToAdd.snapshots[0]);
-              } else {
-                tankFromDB.snapshots.push(snapshotToAdd.snapshots[0]);
-             }
-           }
-      });  
-         await tankStats.save();
-         res.status(200).json(tankStats);
-    } catch  (err) {
+      }
+      const dataFromDB = tankStats.data;
+      dataFromDB.map((tankFromDB) => {
+        const snapshotToAdd = statsToAdd.data.find((tankFromStats) => tankFromStats.tank_id === tankFromDB.tank_id);
+        if (!snapshotToAdd) return;
+        if (snapshotToAdd.snapshots[0].lastBattleTime !== tankFromDB.snapshots.at(-1).lastBattleTime) {
+          if (isSameDay(tankFromDB.snapshots.at(-1).lastBattleTime, snapshotToAdd.snapshots[0].lastBattleTime)) {
+            tankFromDB.snapshots.splice(-1, 1, snapshotToAdd.snapshots[0]);
+          } else {
+            tankFromDB.snapshots.push(snapshotToAdd.snapshots[0]);
+          }
+        }
+      });
+
+      await tankStats.save();
+      res.status(200).json(tankStats);
+    } catch (err) {
       console.log(err);
     }
-      })
-      .catch((err) => console.log(err));
   });
 
 module.exports = tanksRouter;

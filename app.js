@@ -6,9 +6,9 @@ const path = require('path');
 const logger = require('morgan');
 const passport = require('passport');
 const mongoose = require('mongoose');
-const config = require('./config');
+require('dotenv').config();
 
-const url = config.mongoUrl;
+const url = process.env.mongoUrl;
 const connect = mongoose.connect(url, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
