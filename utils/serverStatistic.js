@@ -32,14 +32,17 @@ const getVehicleStats = async (accountId) => {
   const stats = vehicleStats[accountId];
   const achievements = vehicleAchievments[accountId];
 
-  if (!stats || !achievements ) return;
+  if (!stats || !achievements) return;
 
   stats.map((tankStats) => {
+    const battleLifeTime = tankStats.battle_life_time;
+    if (!battleLifeTime) return;
     const regular = getStatsObject(statsNames, tankStats.all);
-    result[tankStats.tank_id] = { regular, battleLifeTime: tankStats.battle_life_time };
+    result[tankStats.tank_id] = { regular, battleLifeTime };
   });
 
   achievements.map((tankAchivements) => {
+    if (!result[tankAchivements.tank_id]) return;
     const mastery = getStatsObject(achievementsName, tankAchivements.achievements);
     result[tankAchivements.tank_id].mastery = mastery;
   });
@@ -68,6 +71,14 @@ const fetchPlayerStats = async (playerIds) => {
         allPlayerStats.account.regular = getStatsObject(statsNames, regularStats);
         allPlayerStats.account.rating = getStatsObject(statsNames, ratingStats);
         allPlayerStats.account.mastery = getStatsObject(achievementsName, achievements);
+      } else {
+        statsNames.map((statName) => {
+          allPlayerStats.account.regular[statName] = allPlayerStats.account.regular[statName] + regularStats[statName];
+          allPlayerStats.account.rating[statName] = allPlayerStats.account.rating[statName] + ratingStats[statName];
+        });
+        achievementsName.map((achievementName) => {
+          allPlayerStats.account.mastery[achievementName] = allPlayerStats.account.mastery[achievementName] + (achievements[achievementName] || 0);
+        });
       }
 
       if (!allPlayerStats.tanks.length && vehicleStats) allPlayerStats.tanks.push(...vehicleStats);
@@ -86,16 +97,7 @@ const fetchPlayerStats = async (playerIds) => {
             allPlayerStats.tanks.push({ wotId, regular, battleLifeTime, mastery });
           }
         });
-      }
-
-      statsNames.map((statName) => {
-        allPlayerStats.account.regular[statName] = allPlayerStats.account.regular[statName] + regularStats[statName];
-        allPlayerStats.account.rating[statName] = allPlayerStats.account.rating[statName] + ratingStats[statName];
-      });
-      achievementsName.map((achievementName) => {
-        allPlayerStats.account.mastery[achievementName] = allPlayerStats.account.mastery[achievementName] + (achievements[achievementName] || 0);
-      });
-      console.log(JSON.stringify(allPlayerStats));
+      } 
     }
   } catch (error) {
     console.error('Error:', error);
@@ -106,7 +108,7 @@ const fetchAllPlayerStats = async () => {
   try {
     const numRequests = Math.ceil(TOTAL_ACCOUNTS / MAX_ACCOUNTS_PER_REQUEST);
 
-    for (let i = 5900000; i < numRequests; i++) { // change `i` to any number
+    for (let i = 5948593; i < numRequests; i++) { // change `i` to any number
       const startIndex = i * MAX_ACCOUNTS_PER_REQUEST;
       const endIndex = Math.min(startIndex + MAX_ACCOUNTS_PER_REQUEST, TOTAL_ACCOUNTS);
       const accountIds = [];
@@ -114,12 +116,15 @@ const fetchAllPlayerStats = async () => {
       for (let accountId = startIndex; accountId < endIndex; accountId++) {
         accountIds.push(accountId);
       }
-
       await fetchPlayerStats(accountIds);
     }
+
+    return allPlayerStats;
   } catch (error) {
     console.error('Error:', error);
   }
 }
 
-(async () => await fetchAllPlayerStats())();
+module.exports = {
+  fetchAllPlayerStats,
+}
