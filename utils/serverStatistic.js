@@ -23,40 +23,28 @@ const getInfo = async (url) => {
 };
 
 const getVehicleStats = async (accountId) => {
-  const result = {};
   const vehicleStatsURL = `${BASE_URL}/tanks/stats/?application_id=${application_id}&account_id=${accountId}`;
   const vehicleAchievmentsURL = `${BASE_URL}/tanks/achievements/?application_id=${application_id}&account_id=${accountId}`;
-  const vehicleStats = await getInfo(vehicleStatsURL);
-  const vehicleAchievments = await getInfo(vehicleAchievmentsURL);
+  const [vehicleStats, vehicleAchievments] = await Promise.all([getInfo(vehicleStatsURL), 
+  getInfo(vehicleAchievmentsURL)]);
 
   const stats = vehicleStats[accountId];
   const achievements = vehicleAchievments[accountId];
 
   if (!stats || !achievements) return;
 
-  stats.map((tankStats) => {
-    const battleLifeTime = tankStats.battle_life_time;
-    if (!battleLifeTime) return;
+  return stats.map((tankStats) => {
     const regular = getStatsObject(statsNames, tankStats.all);
-    result[tankStats.tank_id] = { regular, battleLifeTime };
+    const mastery = getStatsObject(achievementsName, achievements.find((tankAchievements) => tankAchievements.tank_id === tankStats.tank_id).achievements);
+    return { wotId: tankStats.tank_id, regular, battleLifeTime: tankStats.battle_life_time, mastery };
   });
-
-  achievements.map((tankAchivements) => {
-    if (!result[tankAchivements.tank_id]) return;
-    const mastery = getStatsObject(achievementsName, tankAchivements.achievements);
-    result[tankAchivements.tank_id].mastery = mastery;
-  });
-
-  return Object.entries(result).map(([wotId, data]) => ({ wotId, ...data }));
-};
 
 const fetchPlayerStats = async (playerIds) => {
   const playerStatsURL = `${BASE_URL}/account/info/?application_id=${application_id}&account_id=${playerIds.join(',')}&extra=statistics.rating`;
   const playerAchievmentsURL = `${BASE_URL}/account/achievements/?application_id=${application_id}&account_id=${playerIds.join(',')}`;
 
   try {
-    const playerStats = await getInfo(playerStatsURL);
-    const playerAchievments = await getInfo(playerAchievmentsURL);
+  const [playerStats, playerAchievments] = await Promise.all([getInfo(playerStatsURL), getInfo(playerAchievmentsURL)]);
 
     for (const accountId in playerStats) {
       const stats = playerStats[accountId]?.statistics;
@@ -73,31 +61,32 @@ const fetchPlayerStats = async (playerIds) => {
         allPlayerStats.account.mastery = getStatsObject(achievementsName, achievements);
       } else {
         statsNames.map((statName) => {
-          allPlayerStats.account.regular[statName] = allPlayerStats.account.regular[statName] + regularStats[statName];
-          allPlayerStats.account.rating[statName] = allPlayerStats.account.rating[statName] + ratingStats[statName];
+          allPlayerStats.account.regular[statName] += regularStats[statName];
+          allPlayerStats.account.rating[statName] += ratingStats[statName];
         });
         achievementsName.map((achievementName) => {
-          allPlayerStats.account.mastery[achievementName] = allPlayerStats.account.mastery[achievementName] + (achievements[achievementName] || 0);
+          allPlayerStats.account.mastery[achievementName] +=(achievements[achievementName] || 0);
         });
       }
 
-      if (!allPlayerStats.tanks.length && vehicleStats) allPlayerStats.tanks.push(...vehicleStats);
-      else if (vehicleStats) {
-        vehicleStats.map((vehicle) => {
-          const { wotId, regular, battleLifeTime, mastery } = vehicle;
-          if (allPlayerStats.tanks.find((tank) => tank.wotId === wotId)) {
-            const existingTank = allPlayerStats.tanks.find((tank) => tank.wotId === wotId);
-            statsNames.map((statName) => {
-              existingTank.regular[statName] += regular[statName];
-            });
-            achievementsName.map((achievementName) => {
-              existingTank.mastery[achievementName] += mastery[achievementName] || 0;
-            });
+        if (vehicleStats) {
+	  for (const vehicle of vehicleStats) {
+          const existingTank = allPlayerStats.tanks.find((tank) => tank.wotId === vehicle.wotId);
+      
+          if (existingTank) {
+            for (const statName of statsNames) {
+              existingTank.regular[statName] += vehicle.regular[statName];
+            }
+            for (const achievementName of achievementsName) {
+              existingTank.mastery[achievementName] += vehicle.mastery[achievementName] || 0;
+            }
+            existingTank.battleLifeTime += vehicle.battleLifeTime;
           } else {
-            allPlayerStats.tanks.push({ wotId, regular, battleLifeTime, mastery });
+            allPlayerStats.tanks.push(vehicle);
           }
-        });
-      } 
+        }
+      }
+
     }
   } catch (error) {
     console.error('Error:', error);
@@ -111,11 +100,7 @@ const fetchAllPlayerStats = async () => {
     for (let i = 5948593; i < numRequests; i++) { // change `i` to any number
       const startIndex = i * MAX_ACCOUNTS_PER_REQUEST;
       const endIndex = Math.min(startIndex + MAX_ACCOUNTS_PER_REQUEST, TOTAL_ACCOUNTS);
-      const accountIds = [];
-
-      for (let accountId = startIndex; accountId < endIndex; accountId++) {
-        accountIds.push(accountId);
-      }
+    const accountIds = Array.from({ length: endIndex - startIndex }, (_, index) => startIndex + index);
       await fetchPlayerStats(accountIds);
     }
 
