@@ -25,8 +25,7 @@ const getInfo = async (url) => {
 const getVehicleStats = async (accountId) => {
   const vehicleStatsURL = `${BASE_URL}/tanks/stats/?application_id=${application_id}&account_id=${accountId}`;
   const vehicleAchievmentsURL = `${BASE_URL}/tanks/achievements/?application_id=${application_id}&account_id=${accountId}`;
-  const [vehicleStats, vehicleAchievments] = await Promise.all([getInfo(vehicleStatsURL), 
-  getInfo(vehicleAchievmentsURL)]);
+  const [vehicleStats, vehicleAchievments] = await Promise.all([getInfo(vehicleStatsURL), getInfo(vehicleAchievmentsURL)]);
 
   const stats = vehicleStats[accountId];
   const achievements = vehicleAchievments[accountId];
@@ -38,6 +37,7 @@ const getVehicleStats = async (accountId) => {
     const mastery = getStatsObject(achievementsName, achievements.find((tankAchievements) => tankAchievements.tank_id === tankStats.tank_id).achievements);
     return { wotId: tankStats.tank_id, regular, battleLifeTime: tankStats.battle_life_time, mastery };
   });
+};
 
 const fetchPlayerStats = async (playerIds) => {
   const playerStatsURL = `${BASE_URL}/account/info/?application_id=${application_id}&account_id=${playerIds.join(',')}&extra=statistics.rating`;
@@ -65,12 +65,12 @@ const fetchPlayerStats = async (playerIds) => {
           allPlayerStats.account.rating[statName] += ratingStats[statName];
         });
         achievementsName.map((achievementName) => {
-          allPlayerStats.account.mastery[achievementName] +=(achievements[achievementName] || 0);
+          allPlayerStats.account.mastery[achievementName] += (achievements[achievementName] || 0);
         });
       }
 
-        if (vehicleStats) {
-	  for (const vehicle of vehicleStats) {
+      if (vehicleStats) {
+	      for (const vehicle of vehicleStats) {
           const existingTank = allPlayerStats.tanks.find((tank) => tank.wotId === vehicle.wotId);
       
           if (existingTank) {
@@ -100,7 +100,7 @@ const fetchAllPlayerStats = async () => {
     for (let i = 5948593; i < numRequests; i++) { // change `i` to any number
       const startIndex = i * MAX_ACCOUNTS_PER_REQUEST;
       const endIndex = Math.min(startIndex + MAX_ACCOUNTS_PER_REQUEST, TOTAL_ACCOUNTS);
-    const accountIds = Array.from({ length: endIndex - startIndex }, (_, index) => startIndex + index);
+      const accountIds = Array.from({ length: endIndex - startIndex }, (_, index) => startIndex + index);
       await fetchPlayerStats(accountIds);
     }
 

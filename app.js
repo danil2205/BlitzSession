@@ -18,13 +18,14 @@ connect.then(() => {
   console.log('Connect correctly to the server');
 }, (err) => { console.log(err); });
 
-const indexRouter = require('./routes/index');
-const accountRouter = require('./routes/accountRouter');
-const usersRouter = require('./routes/users');
-const sessionRouter = require('./routes/sessionRouter');
-const contactRouter = require('./routes/contactRouter');
-const settingsRouter = require('./routes/settings');
-const tanksRouter = require('./routes/tanksRouter');
+const indexRouter = require('./routes/index.js');
+const accountRouter = require('./routes/accountRouter.js');
+const usersRouter = require('./routes/users.js');
+const sessionRouter = require('./routes/sessionRouter.js');
+const contactRouter = require('./routes/contactRouter.js');
+const settingsRouter = require('./routes/settings.js');
+const tanksRouter = require('./routes/tanksRouter.js');
+const serverRouter = require('./routes/serverRouter.js');
 
 const app = express();
 
@@ -59,6 +60,7 @@ app.use('/session', sessionRouter);
 app.use('/contact', contactRouter);
 app.use('/settings', settingsRouter);
 app.use('/tanks', tanksRouter);
+app.use('/serverStatistic', serverRouter);
 
 app.use(express.static(path.join(__dirname, 'public')));
 
