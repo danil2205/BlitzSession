@@ -4,7 +4,7 @@ const { default: fetch } = require("node-fetch");
 
 const application_id = 'd78e7f67147305f3042bef05755fa168';
 const MAX_ACCOUNTS_PER_REQUEST = 100;
-const TOTAL_ACCOUNTS = 594859325;
+const TOTAL_ACCOUNTS = 594859326;
 const BASE_URL = 'https://api.wotblitz.eu/wotb';
 const allPlayerStats = { account: {}, tanks: [] };
 
@@ -33,10 +33,12 @@ const getVehicleStats = async (accountId) => {
   if (!stats || !achievements) return;
 
   return stats.map((tankStats) => {
+    const battleLifeTime = tankStats.battle_life_time;
+    if (!battleLifeTime) return;
     const regular = getStatsObject(statsNames, tankStats.all);
     const mastery = getStatsObject(achievementsName, achievements.find((tankAchievements) => tankAchievements.tank_id === tankStats.tank_id).achievements);
-    return { wotId: tankStats.tank_id, regular, battleLifeTime: tankStats.battle_life_time, mastery };
-  });
+    return { wotId: tankStats.tank_id, regular, battleLifeTime, mastery };
+  }).filter((tankStats) => tankStats);
 };
 
 const fetchPlayerStats = async (playerIds) => {
@@ -97,10 +99,11 @@ const fetchAllPlayerStats = async () => {
   try {
     const numRequests = Math.ceil(TOTAL_ACCOUNTS / MAX_ACCOUNTS_PER_REQUEST);
 
-    for (let i = 5948593; i < numRequests; i++) { // change `i` to any number
+    for (let i = 5947593; i < numRequests; i++) { // change `i` to any number
       const startIndex = i * MAX_ACCOUNTS_PER_REQUEST;
       const endIndex = Math.min(startIndex + MAX_ACCOUNTS_PER_REQUEST, TOTAL_ACCOUNTS);
       const accountIds = Array.from({ length: endIndex - startIndex }, (_, index) => startIndex + index);
+      console.log(accountIds)
       await fetchPlayerStats(accountIds);
     }
 
