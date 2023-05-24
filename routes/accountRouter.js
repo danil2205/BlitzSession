@@ -104,6 +104,7 @@ accountRouter.route('/:accountID')
       const snapshotsDB = playerStats.data.snapshots;
       const snapshotToAdd = statsToAdd.data.snapshots[0];
 
+
       if (snapshotsDB.at(-1).lastBattleTime !== snapshotToAdd.lastBattleTime) {
         if (isSameDay(snapshotsDB.at(-1).lastBattleTime, snapshotToAdd.lastBattleTime)) {
           snapshotsDB.splice(-1, 1, snapshotToAdd);
@@ -112,14 +113,14 @@ accountRouter.route('/:accountID')
         }
 
         await playerStats.save();
-     }
+      }
 
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'application/json');
-    res.json(playerStats);
-  } catch (err) {
-    next(err);
-  }
+      res.statusCode = 200;
+      res.setHeader('Content-Type', 'application/json');
+      res.json(playerStats);
+    } catch (err) {
+      next(err);
+    }
   })
   .put(cors.corsWithOptions, authenticate.verifyUser, (req, res) => {
     res.statusCode = 403;
