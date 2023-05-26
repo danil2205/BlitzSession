@@ -61,7 +61,7 @@ const postTanksSnapshots = async (account_id = 594859325) => {
   try {
     const { data: { [account_id]: stats } } = await fetch(statsTanksURL).then((res) => res.json());
     // if account_id is invalid, it won't crash my server
-    if (!stats) {
+      if (!stats) {
       res.status = false;
       return res;
     } else {
