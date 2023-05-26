@@ -5,6 +5,7 @@ const fetch = require('node-fetch');
 // Mock the fetch function
 jest.mock('node-fetch');
 
+// tests getListTanks:
 describe('getListTanks', () => {
   it('should return a cleaned list of tanks', async () => {
     const mockResponse = {
@@ -81,3 +82,149 @@ describe('getListTanks', () => {
     expect(console.error).toHaveBeenCalledWith(new Error('API Error'));
   });
 });
+
+
+// tests getTankAchievments:
+describe('getTanksAchievements', () => {
+  it('should return an array of tanks with achievements', async () => {
+    const mockResponse = {
+      status: 200,
+      meta: {
+        count: 1
+      },
+      json: jest.fn().mockResolvedValue({
+        data: {
+          '594859325': [
+            {
+              tank_id: 1,
+              account_id: 594859325,
+              max_series: {
+                sinai: 1337,
+                diehard: 0,
+              },
+              achievements: {
+                markOfMastery: 1,
+                punisher: 4,
+                warrior: 5,
+                markOfMasteryI: 2,
+                medalCarius: 3,
+                markOfMasteryII: 3,
+                markOfMasteryIII: 4,
+              },
+            },
+            {
+              tank_id: 2,
+              account_id: 594859325,
+              max_series: {
+                sinai: 18,
+                medalEkins: 2,
+              },
+              achievements: {
+                markOfMastery: 0,
+                scout: 9,
+                markOfMasteryI: 0,
+                markOfMasteryII: 0,
+                titleSniper: 1,
+              },
+            }
+          ],
+        },
+      }),
+    };
+
+    fetch.mockResolvedValue(mockResponse);
+    const result = await getTanksAchievments();
+
+    expect(result).toEqual([
+      {
+        tank_id: 1,
+        mastery: {
+          markOfMastery: 1,
+          markOfMasteryI: 2,
+          markOfMasteryII: 3,
+          markOfMasteryIII: 4,
+        }
+      },
+      {
+        tank_id: 2,
+        mastery: {
+          markOfMastery: 0,
+          markOfMasteryI: 0,
+          markOfMasteryII: 0,
+          markOfMasteryIII: 0,
+        },
+      },
+    ]);
+
+    expect(fetch).toHaveBeenCalledWith(
+      `https://api.wotblitz.eu/wotb/tanks/achievements/?application_id=${application_id}&account_id=594859325`
+    );
+  });
+
+  it('should return an empty array when achievements object is empty', async () => {
+    const mockResponse = {
+      status: 200,
+      meta: {
+        count: 1
+      },
+      json: jest.fn().mockResolvedValue({
+        data: {
+          '594859325': [
+            {
+              tank_id: 3,
+              account_id: 594859325,
+              max_series: {
+                sinai: 18,
+                medalEkins: 2,
+              },
+              achievements: {},
+            }
+          ],
+        },
+      }),
+    };
+
+    fetch.mockResolvedValue(mockResponse);
+    const result = await getTanksAchievments();
+
+    expect(result).toEqual([]);
+
+    expect(fetch).toHaveBeenCalledWith(
+      `https://api.wotblitz.eu/wotb/tanks/achievements/?application_id=${application_id}&account_id=594859325`
+    );
+  });
+
+  it('should return an empty array when there are no tanks', async () => {
+    const mockResponse = {
+      status: 200,
+      json: jest.fn().mockResolvedValue({
+        data: {
+          '594859325': [],
+        },
+      }),
+    };
+
+    fetch.mockResolvedValue(mockResponse);
+    const result = await getTanksAchievments();
+
+    expect(result).toEqual([]);
+
+    expect(fetch).toHaveBeenCalledWith(
+      `https://api.wotblitz.eu/wotb/tanks/achievements/?application_id=${application_id}&account_id=594859325`
+    );
+  });
+
+  it('should handle API request error', async () => {
+    fetch.mockRejectedValue(new Error('API request failed'));
+    const result = await getTanksAchievments();
+
+    expect(result).toBeUndefined();
+
+    expect(fetch).toHaveBeenCalledWith(
+      `https://api.wotblitz.eu/wotb/tanks/achievements/?application_id=${application_id}&account_id=594859325`
+    );
+
+    expect(console.error).toHaveBeenCalledWith(new Error('API request failed'));
+  });
+});
+
