@@ -157,6 +157,7 @@ const postPlayerSnapshots = async (account_id = 594859325) => {
 };
 
 module.exports = {
+  application_id,
   getListTanks,
   postTanksSnapshots,
   getTanksAchievments,
