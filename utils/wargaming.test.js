@@ -464,7 +464,7 @@ describe('postPlayerSnapshots', () => {
       status: 200,
       json: jest.fn().mockResolvedValue({
         data: {
-        [account_id]: null,
+          [account_id]: null,
         },
       }),
     };
