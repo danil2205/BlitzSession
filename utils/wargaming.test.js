@@ -94,10 +94,10 @@ describe('getTanksAchievements', () => {
       },
       json: jest.fn().mockResolvedValue({
         data: {
-          '594859325': [
+          [account_id]: [
             {
               tank_id: 1,
-              account_id: 594859325,
+              account_id,
               max_series: {
                 sinai: 1337,
                 diehard: 0,
@@ -114,7 +114,7 @@ describe('getTanksAchievements', () => {
             },
             {
               tank_id: 2,
-              account_id: 594859325,
+              account_id,
               max_series: {
                 sinai: 18,
                 medalEkins: 2,
@@ -157,7 +157,7 @@ describe('getTanksAchievements', () => {
     ]);
 
     expect(fetch).toHaveBeenCalledWith(
-      `https://api.wotblitz.eu/wotb/tanks/achievements/?application_id=${application_id}&account_id=594859325`
+      `https://api.wotblitz.eu/wotb/tanks/achievements/?application_id=${application_id}&account_id=${account_id}`
     );
   });
 
@@ -169,10 +169,10 @@ describe('getTanksAchievements', () => {
       },
       json: jest.fn().mockResolvedValue({
         data: {
-          '594859325': [
+          [account_id]: [
             {
               tank_id: 3,
-              account_id: 594859325,
+              account_id,
               max_series: {
                 sinai: 18,
                 medalEkins: 2,
@@ -190,7 +190,7 @@ describe('getTanksAchievements', () => {
     expect(result).toEqual([]);
 
     expect(fetch).toHaveBeenCalledWith(
-      `https://api.wotblitz.eu/wotb/tanks/achievements/?application_id=${application_id}&account_id=594859325`
+      `https://api.wotblitz.eu/wotb/tanks/achievements/?application_id=${application_id}&account_id=${account_id}`
     );
   });
 
@@ -199,7 +199,7 @@ describe('getTanksAchievements', () => {
       status: 200,
       json: jest.fn().mockResolvedValue({
         data: {
-          '594859325': [],
+          [account_id]: [],
         },
       }),
     };
@@ -210,7 +210,7 @@ describe('getTanksAchievements', () => {
     expect(result).toEqual([]);
 
     expect(fetch).toHaveBeenCalledWith(
-      `https://api.wotblitz.eu/wotb/tanks/achievements/?application_id=${application_id}&account_id=594859325`
+      `https://api.wotblitz.eu/wotb/tanks/achievements/?application_id=${application_id}&account_id=${account_id}`
     );
   });
 
@@ -221,7 +221,7 @@ describe('getTanksAchievements', () => {
     expect(result).toBeUndefined();
 
     expect(fetch).toHaveBeenCalledWith(
-      `https://api.wotblitz.eu/wotb/tanks/achievements/?application_id=${application_id}&account_id=594859325`
+      `https://api.wotblitz.eu/wotb/tanks/achievements/?application_id=${application_id}&account_id=${account_id}`
     );
 
     expect(console.error).toHaveBeenCalledWith(new Error('API request failed'));
@@ -229,146 +229,153 @@ describe('getTanksAchievements', () => {
 });
 
 
-// tests for postTanksSnapshot:
-// describe('postTanksSnapshots', () => {
-//   it('should return the correct response when account_id is valid', async () => {
-//     const account_id = 594859325;
+// tests for postTanksSnapshots:
+describe('postTanksSnapshots', () => {
+  it('should return the correct response when account_id is valid', async () => {
+    const mockStatsResponse = {
+      status: 200,
+      json: jest.fn().mockResolvedValueOnce({
+        data: {
+          [account_id]: [
+            {
+              tank_id: 123,
+              all: {
+                battles: 50,
+                wins: 30,
+                losses: 20,
+                damage_dealt: 10000,
+                damage_received: 5000,
+                frags: 10,
+                spotted: 15,
+                survived_battles: 25,
+              },
+              last_battle_time: 1234567890,
+              battle_life_time: 100,
+            }
+          ]
+        }
+      })
+    };
 
-//     const mockResponse = {
-//       status: 200,
-//       meta: {
-//         count: 1
-//       },
-//       json: jest.fn().mockResolvedValue({
-//         data: {
-//           [account_id]: [
-//             {
-//               achievements: [
-//                 {
-//                   tank_id: 123,
-//                   mastery: {
-//                     markOfMastery: 1,
-//                     markOfMasteryI: 2,
-//                     markOfMasteryII: 3,
-//                     markOfMasteryIII: 4,
-//                   }
-//                 }
-//               ],
-//               listOfTanks: [
-//                 {
-//                   name: 'Tank 1',
-//                   tank_id: 123,
-//                   tier: 8,
-//                   type: 'heavyTank',
-//                   isPremium: true,
-//                   hp: 1500,
-//                   image: 'tank1.jpg'
-//                 }
-//               ],
-//               tank_id: 123,
-//               battle_life_time: 100,
-//               last_battle_time: 1234567890,
-//               all: {
-//                 battles: 50,
-//                 wins: 30,
-//                 losses: 20,
-//                 damage_dealt: 10000,
-//                 damage_received: 5000,
-//                 frags: 10,
-//                 spotted: 15,
-//                 survived_battles: 25,
-//               },
-//             },
-//           ],
-//         },
-//       }),
-//     };
+    const mockAchievementsResponse = {
+      status: 200,
+      json: jest.fn().mockResolvedValueOnce({
+        data: {
+          [account_id]: [
+            {
+              tank_id: 123,
+              achievements: {
+                markOfMastery: 1,
+                markOfMasteryI: 2,
+                markOfMasteryII: 3,
+                markOfMasteryIII: 4,
+              },
+            }
+          ]
+        }
+      })
+    };
+
+    const mockListResponse = {
+      status: 200,
+      json: jest.fn().mockResolvedValueOnce({
+        data: {
+          123: {
+            name: 'Tank 1',
+            tank_id: 123,
+            tier: 8,
+            type: 'heavyTank',
+            is_premium: true,
+            default_profile: {
+              hp: 1500
+            },
+            images: {
+              normal: 'tank1.jpg'
+            }
+          }
+        }
+      })
+    };
+
+    const expectedResponse = {
+      status: true,
+      account_id,
+      data: [
+        {
+          name: 'Tank 1',
+          tank_id: 123,
+          tier: 8,
+          type: 'heavyTank',
+          isPremium: true,
+          hp: 1500,
+          image: 'tank1.jpg',
+          snapshots: [
+            {
+              battleLifeTime: 100,
+              lastBattleTime: 1234567890,
+              mastery: {
+                markOfMastery: 1,
+                markOfMasteryI: 2,
+                markOfMasteryII: 3,
+                markOfMasteryIII: 4,
+              },
+              regular: {
+                battles: 50,
+                wins: 30,
+                losses: 20,
+                damageDealt: 10000,
+                damageReceived: 5000,
+                frags: 10,
+                spotted: 15,
+                survivedBattles: 25,
+              },
+            },
+          ],
+        },
+      ],
+    };
+
+    fetch.mockResolvedValueOnce(mockStatsResponse)
+      .mockResolvedValueOnce(mockAchievementsResponse)
+      .mockResolvedValueOnce(mockListResponse);
+
+    const response = await postTanksSnapshots(account_id);
+
+    expect(response).toEqual(expectedResponse);
+  });
 
 
-//     const expectedResponse = {
-//       status: true,
-//       account_id: account_id,
-//       data: [
-//         {
-//           name: 'Tank 1',
-//           tank_id: 123,
-//           tier: 8,
-//           type: 'heavyTank',
-//           isPremium: true,
-//           hp: 1500,
-//           image: 'tank1.jpg',
-//           snapshots: [
-//             {
-//               battleLifeTime: 100,
-//               lastBattleTime: 1234567890,
-//               mastery: {
-//                 markOfMastery: 1,
-//                 markOfMasteryI: 2,
-//                 markOfMasteryII: 3,
-//                 markOfMasteryIII: 4,
-//               },
-//               regular: {
-//                 battles: 50,
-//                 wins: 30,
-//                 losses: 20,
-//                 damageDealt: 10000,
-//                 damageReceived: 5000,
-//                 frags: 10,
-//                 spotted: 15,
-//                 survivedBattles: 25,
-//               },
-//             },
-//           ],
-//         },
-//       ],
-//     };
+  it('should return the correct response when account_id is invalid', async () => {
+    const mockStatsResponse = {
+      status: 'ok',
+      meta: {
+        count: 1
+      },
+      json: jest.fn().mockResolvedValue({
+        data: {
+          '1': null
+        },
+      }),
+    };
 
-//     fetch.mockResolvedValue(mockResponse);
-//     const response = await postTanksSnapshots(account_id);
+    fetch.mockResolvedValueOnce(mockStatsResponse);
+    const result = await postTanksSnapshots(1);
 
-//     expect(response).toEqual(expectedResponse);
-//   });
+    expect(result).toEqual({
+      status: false,
+      account_id: 1,
+      data: [],
+    });
 
-
-//   it('should return the correct response when account_id is invalid', async () => {
-//     // Mock the response from the API
-//     const mockStatsResponse = {
-//       status: 'ok',
-//       meta: {
-//         count: 1
-//       },
-//       json: jest.fn().mockResolvedValue({
-//         data: {
-//           '1': null
-//         },
-//       }),
-//     };
-
-//     // Mock the fetch function to return the mock response
-//     fetch.mockResolvedValueOnce(mockStatsResponse);
-
-//     // Call the postTanksSnapshots function
-//     const result = await postTanksSnapshots(1);
-
-//     // Assert the expected response
-//     expect(result).toEqual({
-//       status: false,
-//       account_id: 1,
-//       data: [],
-//     });
-
-//     // Verify that the fetch function was called with the correct URL
-//     expect(fetch).toHaveBeenCalledWith(
-//       `https://api.wotblitz.eu/wotb/tanks/stats/?application_id=${application_id}&account_id=1`
-//     );
-//   });
-// });
+    expect(fetch).toHaveBeenCalledWith(
+      `https://api.wotblitz.eu/wotb/tanks/stats/?application_id=${application_id}&account_id=1`
+    );
+  });
+});
 
 // tests for postPlayerSnapshots:
 describe('postPlayerSnapshots', () => {
   it('should return the correct response when account_id is valid', async () => {
-    const account_id = 594859325;
-
     const mockResponse = {
       status: 200,
       meta: {
@@ -457,7 +464,7 @@ describe('postPlayerSnapshots', () => {
       status: 200,
       json: jest.fn().mockResolvedValue({
         data: {
-          '123456789': null,
+        [account_id]: null,
         },
       }),
     };
@@ -475,7 +482,6 @@ describe('postPlayerSnapshots', () => {
   });
 
   it('should handle errors and log them to the console', async () => {
-    const account_id = 594859325;
     fetch.mockRejectedValue(new Error('Network error'));
     const response = await postPlayerSnapshots(account_id);
 
