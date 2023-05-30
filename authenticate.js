@@ -16,7 +16,6 @@ exports.getToken = (user) => (
   jwt.sign(user, process.env.secretKey,
     { expiresIn: '7d' })
 );
-
 const opts = {};
 opts.jwtFromRequest = ExtractJwt.fromAuthHeaderAsBearerToken();
 opts.secretOrKey = process.env.secretKey;
