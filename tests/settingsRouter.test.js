@@ -8,6 +8,7 @@ const User = require('../models/user.js');
 const Settings = require('../models/settings.js');
 const settingsRouter = require('../routes/settings.js');
 const userRouter = require('../routes/users.js');
+const { authenticate } = require('../authenticate');
 require('dotenv').config();
 
 const app = express();

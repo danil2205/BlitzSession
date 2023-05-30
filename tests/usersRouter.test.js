@@ -5,6 +5,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const passport = require('passport');
 const User = require('../models/user.js');
+const { authenticate } = require('../authenticate');
 const userRouter = require('../routes/users.js');
 const mongoose = require('mongoose');
 require('dotenv').config();
