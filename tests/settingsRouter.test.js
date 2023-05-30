@@ -8,12 +8,10 @@ const User = require('../models/user.js');
 const Settings = require('../models/settings.js');
 const settingsRouter = require('../routes/settings.js');
 const userRouter = require('../routes/users.js');
-const { authenticate } = require('../authenticate');
 require('dotenv').config();
 
 const app = express();
 app.use(bodyParser.json());
-
 app.use('/settings', settingsRouter);
 app.use('/users', userRouter);
 
@@ -42,7 +40,7 @@ describe('Settings Router', () => {
   });
 
   afterAll(async () => {
-    await User.deleteMany();
+    await User.findOneAndDelete({ username: 'testuser2' });
     await Settings.deleteMany();
     await mongoose.connection.close();
   });
@@ -54,8 +52,7 @@ describe('Settings Router', () => {
         .set('Authorization', `Bearer ${bearerToken}`);
 
       expect(response.status).toBe(200);
-      expect(response.body).toHaveLength(0); // Adjust the expected length based on your test data
-      // Add more assertions as needed
+      expect(response.body).toHaveLength(0);
     });
 
     it('should return 401 if user is not authenticated', async () => {
@@ -63,7 +60,6 @@ describe('Settings Router', () => {
         .get('/settings');
 
       expect(response.status).toBe(401);
-      // Add more assertions as needed
     });
   });
 
@@ -87,7 +83,6 @@ describe('Settings Router', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('alignment', 'left');
-      // Add more assertions as needed
     });
 
     it('should update existing settings for the authenticated user', async () => {
@@ -109,7 +104,6 @@ describe('Settings Router', () => {
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('alignment', 'right');
-      // Add more assertions as needed
     });
 
     it('should return 401 if user is not authenticated', async () => {
@@ -129,7 +123,6 @@ describe('Settings Router', () => {
         .send(newSettings);
 
       expect(response.status).toBe(401);
-      // Add more assertions as needed
     });
   });
 
@@ -140,7 +133,6 @@ describe('Settings Router', () => {
         .set('Authorization', `Bearer ${bearerToken}`);
 
       expect(response.status).toBe(403);
-      // Add more assertions as needed
     });
   });
 
@@ -151,7 +143,6 @@ describe('Settings Router', () => {
         .set('Authorization', `Bearer ${bearerToken}`);
 
       expect(response.status).toBe(403);
-      // Add more assertions as needed
     });
   });
 });
