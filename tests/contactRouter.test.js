@@ -35,8 +35,6 @@ describe('Contact Router', () => {
       .post('/users/signup')
       .send(newUser);
 
-      console.log(response)
-
     bearerToken = response.body.token;
   });
 

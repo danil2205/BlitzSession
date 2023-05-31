@@ -13,19 +13,39 @@ tanksRouter.use(bodyParser.json());
 
 tanksRouter.route('/')
   .options(cors.corsWithOptions, (_, res) => { res.sendStatus(200); })
-  .get(cors.cors, async (_, res) => res.json(await getListTanks()));
+  .get(cors.cors, async (_, res) => {
+    try {
+      res.json(await getListTanks());
+    } catch (err) {
+      console.error(err);
+      res.status(404).json({ error: 'Failed to fetch tank list' });
+    }
+  });
 
 tanksRouter.route('/:accountID')
   .options(cors.corsWithOptions, (_, res) => { res.sendStatus(200); })
-  .get(cors.cors, async (req, res) => res.json(await postTanksSnapshots(req.params.accountID)))
-  .post(cors.corsWithOptions, authenticate.verifyUser, async (req, res, next) => {
-    const statsToAdd = await postTanksSnapshots(req.params.accountID);
-    if (!statsToAdd.status) { // if bad data
-      return res.status(404).json(statsToAdd)
-    };
-    statsToAdd.data = statsToAdd.data.filter((tankStats) => tankStats.tank_id);
+  .get(cors.cors, async (req, res) => {
     try {
-      const tankStats = await TankStats.findOne({ 'account_id': req.params.accountID  });
+      const tankSnapshots = await postTanksSnapshots(req.params.accountID);
+      if (tankSnapshots.status) {
+        res.status(200).json(tankSnapshots);
+      } else {
+        res.status(404).json(tankSnapshots);
+      }
+    } catch (err) {
+      console.error(err);
+      res.status(404).json({ error: 'Failed to fetch tank snapshots' });
+    }
+  })
+  .post(cors.corsWithOptions, authenticate.verifyUser, async (req, res, next) => {
+    try {
+      const statsToAdd = await postTanksSnapshots(req.params.accountID);
+      if (!statsToAdd.status) { // if bad data
+        return res.status(404).json(statsToAdd)
+      };
+      statsToAdd.data = statsToAdd.data.filter((tankStats) => tankStats.tank_id);
+
+      const tankStats = await TankStats.findOne({ 'account_id': req.params.accountID });
 
       if (!tankStats) {
         const createdTanks = await TankStats.create(statsToAdd);
@@ -49,7 +69,8 @@ tanksRouter.route('/:accountID')
       await tankStats.save();
       res.status(200).json(tankStats);
     } catch (err) {
-      console.log(err);
+      console.error(err);
+      res.status(404).json({ error: 'Failed to fetch tank snapshots' });
     }
   });
 
