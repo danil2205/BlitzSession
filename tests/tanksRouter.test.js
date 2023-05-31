@@ -8,82 +8,13 @@ const User = require('../models/user.js');
 const tanksRouter = require('../routes/tanksRouter.js');
 const userRouter = require('../routes/users.js');
 const mongoose = require('mongoose');
+const { getListTanks, postTanksSnapshots } = require('../utils/wargaming.js');
 require('dotenv').config();
-
 
 const app = express();
 app.use(bodyParser.json());
 app.use('/tanks', tanksRouter);
 app.use('/users', userRouter);
-
-// describe('Tanks Router', () => {
-//   let bearerToken;
-//   beforeAll(async () => {
-//     const url = process.env.mongoUrlTest;
-//     mongoose.connect(url, {
-//       useNewUrlParser: true,
-//       useUnifiedTopology: true,
-//     });
-
-//     const newUser = {
-//       username: 'testuser4',
-//       password: 'testpassword',
-//       firstName: 'John',
-//       lastName: 'Doe'
-//     };
-
-//     const response = await request(app)
-//       .post('/users/signup')
-//       .send(newUser);
-
-//     bearerToken = response.body.token;
-//   });
-
-//   afterAll(async () => {
-//     await TankStats.deleteMany();
-//     await User.findOneAndDelete({ username: 'testuser4' });
-//     await mongoose.connection.close();
-//   });
-
-//   describe('GET /tanks', () => {
-//     it('should return the list of tanks', async () => {
-//       const response = await request(app).get('/tanks');
-//       expect(response.status).toBe(200);
-//       expect(response.body).toBeDefined();
-//     });
-//   });
-
-//   describe('GET /tanks/:accountID', () => {
-//     it('should return the tank snapshots for the given account ID', async () => {
-//       const accountID = 594859325;
-//       const response = await request(app).get(`/tanks/${accountID}`);
-//       expect(response.status).toBe(200);
-//       expect(response.body).toBeDefined();
-//     });
-//   });
-
-//   describe('POST /tanks/:accountID', () => {
-//     it('should add tank snapshots for the given account ID', async () => {
-//       const accountID = 594859325;
-//       const response = await request(app).post(`/tanks/${accountID}`).set('Authorization', `Bearer ${bearerToken}`);
-//       expect(response.status).toBe(200);
-//       expect(response.body).toBeDefined();
-//     });
-
-//     it('should return an error if bad data is received', async () => {
-//       const accountID = 1;
-//       const response = await request(app).post(`/tanks/${accountID}`).set('Authorization', `Bearer ${bearerToken}`);
-//       expect(response.status).toBe(404);
-//       expect(response.body).toBeDefined();
-//     });
-//   });
-// });
-
-
-// const request = require('supertest');
-// const app = require('../app');
-// const TankStats = require('../models/tankStats');
-const { getListTanks, postTanksSnapshots } = require('../utils/wargaming.js');
 
 jest.mock('../utils/wargaming.js', () => ({
   getListTanks: jest.fn(),
