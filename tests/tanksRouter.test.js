@@ -1,4 +1,4 @@
-'use strict';
+// 'use strict';
 
 const request = require('supertest');
 const express = require('express');
@@ -183,7 +183,6 @@ describe('Tanks Router', () => {
         .post(`/tanks/${accountID}`)
         .set('Authorization', `Bearer ${bearerToken}`)
         .send();
-
       expect(response.status).toBe(404);
       expect(response.body.error).toBe('Failed to fetch tank snapshots');
     });

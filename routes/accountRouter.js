@@ -24,38 +24,41 @@ accountRouter.route('/')
       }, (err) => next(err))
       .catch((err) => next(err));
   })
-  .post(cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
-    if (req.body.account_id === null) {
-      const err = new Error('Error while getting info');
-      err.status = 401;
-      return next(err);
-    }
-    Accounts.findOne({ 'user': req.user._id })
-      .then((accounts) => {
-        if (!accounts) {
-          Accounts.create({})
-            .then((account) => {
-              account.user = req.user._id;
-              account.userAccounts.push(req.body);
-              account.save();
-              res.statusCode = 200;
-              res.setHeader('Content-Type', 'application/json');
-              res.json(account);
-            });
+  .post(cors.corsWithOptions, authenticate.verifyUser, async (req, res, next) => {
+    try {
+      if (req.body.account_id === null) {
+        const err = new Error('Error while getting info');
+        err.status = 401;
+        err.message = 'Error while getting info';
+        throw err;
+      }
+      
+      const accounts = await Accounts.findOne({ user: req.user._id });
+  
+      if (!accounts) {
+        const account = await Accounts.create({});
+        account.user = req.user._id;
+        account.userAccounts.push(req.body);
+        await account.save();
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(account);
+      } else {
+        if (accounts.userAccounts.some(account => account.account_id.toString() === req.body.account_id)) {
+          const err = new Error('You already have this account!');
+          err.status = 401;
+          throw err;
         } else {
-          if (accounts.userAccounts.some((account) => account.account_id.toString() === req.body.account_id)) {
-            const err = new Error('You already have this account!');
-            err.status = 401;
-            return next(err);
-          } else {
-            accounts.userAccounts.push(req.body);
-            accounts.save();
-            res.statusCode = 200;
-            res.setHeader('Content-Type', 'application/json');
-            res.json(accounts);
-          }
+          accounts.userAccounts.push(req.body);
+          await accounts.save();
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          res.json(accounts);
         }
-      });
+      }
+    } catch (err) {
+      next(err);
+    }
   })
   .put(cors.corsWithOptions, authenticate.verifyUser, (req, res) => {
     res.statusCode = 403;
@@ -76,6 +79,12 @@ accountRouter.route('/:accountID')
   .get(cors.cors, async (req, res, next) => {
       try {
         const accountStats = await AccountStats.findOne({ 'data.accountId': req.params.accountID });
+        if (accountStats === null) {
+          const err = new Error('Error while getting account');
+          err.status = 404;
+          err.message = 'Error while getting account';
+          throw err;
+        }
         res.statusCode = 200;
         res.setHeader('Content-Type', 'application/json');
         res.json(accountStats);
@@ -88,10 +97,17 @@ accountRouter.route('/:accountID')
       const statsToAdd = await postPlayerSnapshots(req.params.accountID);
       const playerStats = await AccountStats.findOne({ 'data.accountId': req.params.accountID });
 
-      if (!statsToAdd) {
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'application/json');
-        return res.json(playerStats);
+      if (!statsToAdd.success) {
+        if (playerStats) {
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          return res.json(playerStats);
+        } else {
+          const err = new Error('Account not found');
+          err.status = 404;
+          err.message = 'Account not found';
+          throw err;
+        }
       }
 
       if (!playerStats) {

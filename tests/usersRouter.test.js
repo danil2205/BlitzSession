@@ -26,7 +26,7 @@ describe('User Router', () => {
   });
 
   afterAll(async () => {
-    await User.deleteMany();
+    await User.findOneAndDelete({ username: 'testuser1' });
     await mongoose.connection.close();
   });
 
