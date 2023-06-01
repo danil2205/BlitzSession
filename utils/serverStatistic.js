@@ -18,27 +18,31 @@ const getInfo = async (url) => {
     const data = await response.json();
     return data.data;
   } catch (error) {
-    console.error('Error:', error);
+    console.error(error);
   }
 };
 
 const getVehicleStats = async (accountId) => {
   const vehicleStatsURL = `${BASE_URL}/tanks/stats/?application_id=${application_id}&account_id=${accountId}`;
   const vehicleAchievmentsURL = `${BASE_URL}/tanks/achievements/?application_id=${application_id}&account_id=${accountId}`;
-  const [vehicleStats, vehicleAchievments] = await Promise.all([getInfo(vehicleStatsURL), getInfo(vehicleAchievmentsURL)]);
+  try {
+    const [vehicleStats, vehicleAchievments] = await Promise.all([getInfo(vehicleStatsURL), getInfo(vehicleAchievmentsURL)]);
 
-  const stats = vehicleStats[accountId];
-  const achievements = vehicleAchievments[accountId];
-
-  if (!stats || !achievements) return;
-
-  return stats.map((tankStats) => {
-    const battleLifeTime = tankStats.battle_life_time;
-    if (!battleLifeTime) return;
-    const regular = getStatsObject(statsNames, tankStats.all);
-    const mastery = getStatsObject(achievementsName, achievements.find((tankAchievements) => tankAchievements.tank_id === tankStats.tank_id).achievements);
-    return { wotId: tankStats.tank_id, regular, battleLifeTime, mastery };
-  }).filter((tankStats) => tankStats);
+    const stats = vehicleStats[accountId];
+    const achievements = vehicleAchievments[accountId];
+  
+    if (!stats || !achievements) return;
+  
+    return stats.map((tankStats) => {
+      const battleLifeTime = tankStats.battle_life_time;
+      if (!battleLifeTime) return;
+      const regular = getStatsObject(statsNames, tankStats.all);
+      const mastery = getStatsObject(achievementsName, achievements.find((tankAchievements) => tankAchievements.tank_id === tankStats.tank_id).achievements);
+      return { wotId: tankStats.tank_id, regular, battleLifeTime, mastery };
+    }).filter((tankStats) => tankStats);
+  } catch (err) {
+    console.error(err);
+  }
 };
 
 const fetchPlayerStats = async (playerIds) => {
@@ -114,5 +118,8 @@ const fetchAllPlayerStats = async () => {
 }
 
 module.exports = {
+  application_id,
+  getVehicleStats,
+  fetchPlayerStats,
   fetchAllPlayerStats,
 }

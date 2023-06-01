@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - tests/wargaming
+      - tests/routers
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up environment variables
+        run: |
+          echo "mongoUrlTest=${{ secrets.MONGOURLTEST }}" >> $GITHUB_ENV
+          echo "secretKey=${{ secrets.SECRETKEY }}" >> $GITHUB_ENV
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Test
+        run: npm test
