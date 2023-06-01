@@ -54,14 +54,18 @@ tanksRouter.route('/:accountID')
         return res.json(createdTanks);
       }
       const dataFromDB = tankStats.data;
-      dataFromDB.map((tankFromDB) => {
-        const snapshotToAdd = statsToAdd.data.find((tankFromStats) => tankFromStats.tank_id === tankFromDB.tank_id);
-        if (!snapshotToAdd) return;
-        if (snapshotToAdd.snapshots[0].lastBattleTime !== tankFromDB.snapshots.at(-1).lastBattleTime) {
-          if (isSameDay(tankFromDB.snapshots.at(-1).lastBattleTime, snapshotToAdd.snapshots[0].lastBattleTime)) {
-            tankFromDB.snapshots.splice(-1, 1, snapshotToAdd.snapshots[0]);
+      statsToAdd.data.map((tankFromStats) => {
+        const snapshotsFromDB = dataFromDB.find((tankFromDB) => tankFromStats.tank_id === tankFromDB.tank_id);
+        if (!snapshotsFromDB) {
+          dataFromDB.push(tankFromStats);
+          return;
+        }
+
+        if (tankFromStats.snapshots[0].lastBattleTime !== snapshotsFromDB.snapshots.at(-1).lastBattleTime) {
+          if (isSameDay(snapshotsFromDB.snapshots.at(-1).lastBattleTime, tankFromStats.snapshots[0].lastBattleTime)) {
+            snapshotsFromDB.snapshots.splice(-1, 1, tankFromStats.snapshots[0]);
           } else {
-            tankFromDB.snapshots.push(snapshotToAdd.snapshots[0]);
+            snapshotsFromDB.snapshots.push(tankFromStats.snapshots[0]);
           }
         }
       });
