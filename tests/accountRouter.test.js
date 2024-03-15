@@ -58,12 +58,12 @@ describe('Account Router', () => {
         access_token: 'blabalbal',
         expires_at: 1685568249,
       };
-  
+
       const res = await request(app)
         .post('/accounts')
         .set('Authorization', `Bearer ${bearerToken}`)
         .send(newAccount);
-  
+
       expect(res.statusCode).toBe(200);
       expect(res.body).toHaveProperty('user');
       expect(res.body).toHaveProperty('userAccounts');
@@ -77,9 +77,8 @@ describe('Account Router', () => {
           }),
         ])
       );
-      
     });
-  
+
     it('should return an error if the account ID is null', async () => {
       const newAccount = {
         account_id: null,
@@ -87,9 +86,9 @@ describe('Account Router', () => {
         access_token: 'sdasddf',
         expires_at: 1685568249,
       };
-  
+
       try {
-        const res = await request(app)
+        await request(app)
         .post('/accounts')
         .set('Authorization', `Bearer ${bearerToken}`)
         .send(newAccount);
@@ -99,7 +98,7 @@ describe('Account Router', () => {
       }
     });
   });
-  
+
 
   describe('GET /accounts', () => {
     it('should return user accounts for the authenticated user', async () => {
@@ -107,14 +106,14 @@ describe('Account Router', () => {
         .get('/accounts')
         .set('Authorization', `Bearer ${bearerToken}`)
         .send();
-  
+
       expect(res.statusCode).toBe(200);
       expect(res.body).toHaveProperty('length');
       expect(res.body).toEqual(expect.arrayContaining([]));
       expect(res.body[0]).toHaveProperty('user');
       expect(res.body[0]).toHaveProperty('userAccounts');
     });
-  
+
     it('should return an error if the user is not authenticated', async () => {
       try {
         await request(app).get('/accounts');
@@ -124,7 +123,7 @@ describe('Account Router', () => {
       }
     });
   });
-  
+
   describe('GET /accounts/:accountID', () => {
     it('should return the account stats for a valid account ID', async () => {
       const accountId = 594859325;
@@ -155,7 +154,7 @@ describe('Account Router', () => {
         },
         success: true
       };
-      
+
       await AccountStats.create(accountStatsData);
 
       const res = await request(app)
@@ -168,7 +167,7 @@ describe('Account Router', () => {
     it('should return an error for an invalid account ID', async () => {
       const invalidAccountId = 1;
       try {
-        const res = await request(app).get(`/accounts/${invalidAccountId}`);
+        await request(app).get(`/accounts/${invalidAccountId}`);
       } catch (err) {
         expect(err.status).toBe(404);
         expect(err.message).toBe('Error while getting account');
