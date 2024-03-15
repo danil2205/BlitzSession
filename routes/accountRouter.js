@@ -32,9 +32,9 @@ accountRouter.route('/')
         err.message = 'Error while getting info';
         throw err;
       }
-      
+
       const accounts = await Accounts.findOne({ user: req.user._id });
-  
+
       if (!accounts) {
         const account = await Accounts.create({});
         account.user = req.user._id;
@@ -48,13 +48,13 @@ accountRouter.route('/')
           const err = new Error('You already have this account!');
           err.status = 401;
           throw err;
-        } else {
-          accounts.userAccounts.push(req.body);
-          await accounts.save();
-          res.statusCode = 200;
-          res.setHeader('Content-Type', 'application/json');
-          res.json(accounts);
         }
+
+        accounts.userAccounts.push(req.body);
+        await accounts.save();
+        res.statusCode = 200;
+        res.setHeader('Content-Type', 'application/json');
+        res.json(accounts);
       }
     } catch (err) {
       next(err);
